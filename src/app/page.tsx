@@ -1,5 +1,5 @@
-import { TrainingStudio } from "@/components/training/TrainingStudio";
+import { HomeDashboard } from "@/components/home/HomeDashboard";
 
 export default function Home() {
-  return <TrainingStudio />;
+  return <HomeDashboard />;
 }
