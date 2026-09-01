@@ -220,9 +220,10 @@ progress::-moz-progress-bar { background: var(--action); border-radius: 999px; }
 .practice-heading { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 28px; }
 .practice-heading h1 { font-size: 32px; font-weight: 600; line-height: 1.5; letter-spacing: -.025em; }
 .practice-badge { font-size: 11px; color: #6e6e73; }
-.practice-layout { display: grid; grid-template-columns: minmax(0,1fr) 300px; align-items: start; gap: 24px; }
-.practice-playing { display: flex; flex-direction: column; min-width: 0; gap: 18px; }
-.practice-sidebar { min-width: 0; display: flex; flex-direction: column; gap: 18px; }
+.practice-layout { display: grid; grid-template-columns: minmax(0,1fr) 300px; grid-template-areas: "playing current" "playing sidebar"; align-items: start; gap: 18px 24px; }
+.practice-current { grid-area: current; min-width: 0; }
+.practice-playing { grid-area: playing; display: flex; flex-direction: column; min-width: 0; gap: 18px; }
+.practice-sidebar { grid-area: sidebar; min-width: 0; display: flex; flex-direction: column; gap: 18px; }
 .practice-sidebar .ui-panel { padding: 24px; border-color: transparent; }
 .practice-sidebar h2 { font-size: 15px; font-weight: 500; }
 .current-note-panel { border: 0; background: #1d1d1f; color: white; padding: 24px 28px; }
@@ -261,6 +262,23 @@ progress::-moz-progress-bar { background: var(--action); border-radius: 999px; }
 .camera-panel > p[role=status] { font-size: 11px; color: var(--text-secondary); }
 .camera-panel summary { font-size: 12px; font-weight: 500; }
 
+/* iPad landscape: keep the camera, current target, and upcoming notes in one view. */
+@media (min-width: 1024px) and (max-width: 1280px) and (orientation: landscape) {
+  .practice-main { width: calc(100% - 40px); max-width: 1200px; padding-top: 20px; }
+  .practice-heading { margin-bottom: 14px; }
+  .practice-heading h1 { font-size: 28px; }
+  .practice-layout { grid-template-columns: minmax(0, 1fr) 320px; gap: 16px; }
+  .practice-playing, .practice-sidebar { gap: 14px; }
+  .practice-sidebar .ui-panel { padding: 20px; }
+  .practice-current .current-note { font-size: 46px; }
+  .practice-current .current-note-top { gap: 12px; }
+  .practice-current progress { margin-top: 16px; }
+  .practice-sidebar .next-notes { margin-top: 14px; }
+  .camera-panel { padding: 18px 20px; }
+  .camera-panel > div:first-child, .camera-panel > p[role=status] { margin-bottom: 8px; }
+  .camera-panel .camera-stage { height: min(50svh, 400px); min-height: 330px; }
+}
+
 @media (max-width: 1023px) {
   .home-hero { gap: 44px; padding-block: 60px; }
   .hero-copy h1 { font-size: 58px; }
@@ -272,8 +290,7 @@ progress::-moz-progress-bar { background: var(--action); border-radius: 999px; }
   .heritage-copy h2 { font-size: 36px; }
   .library-heading { flex-direction: column; align-items: start; gap: 24px; }
   .library-search { width: 100%; max-width: 440px; }
-  .practice-layout { grid-template-columns: minmax(0,1fr); }
-  .practice-sidebar { display: grid; grid-template-columns: 1fr 1fr; align-items: start; }
+  .practice-layout { grid-template-columns: minmax(0,1fr); grid-template-areas: "current" "playing" "sidebar"; }
 }
 @media (max-width: 767px) {
   .page-width, .site-header-inner { width: calc(100% - 40px); }
@@ -364,8 +381,6 @@ progress::-moz-progress-bar { background: var(--action); border-radius: 999px; }
   .practice-heading { gap: 6px; margin-bottom: 18px; }
   .practice-heading h1 { font-size: 25px; }
   .practice-badge { font-size: 10px; }
-  .practice-playing { gap: 12px; }
-  .practice-sidebar { display: flex; gap: 12px; }
   .practice-layout { gap: 12px; }
   .ui-panel { border-radius: 18px; padding: 20px; }
   .current-note-panel { padding: 18px 20px; }

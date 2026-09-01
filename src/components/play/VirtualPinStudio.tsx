@@ -156,27 +156,37 @@ export function VirtualPinStudio({ song, freePlay = false }: { song: Song; freeP
           <span className="practice-badge">{freePlay ? "FREE PLAY · ไม่เก็บคะแนน" : "PRACTICE · แบบฝึกตัวอย่าง"}</span>
         </div>
         <div className="practice-layout">
-          <section aria-label="พื้นที่เล่นพิณ" className="practice-playing">
-            <div className="ui-panel current-note-panel order-1">
-              <div className="current-note-top">
-                <div>
-                  <p className="note-eyebrow">{freePlay ? "โน้ตที่เล่นล่าสุด" : complete ? "ฝึกสำเร็จ" : "โน้ตปัจจุบัน"}</p>
-                  <p className="current-note">{freePlay ? lastNote.split(" · ")[0] || "ลองดีดสาย" : complete ? "ครบทุกโน้ต ✓" : expected?.label}</p>
-                  {!freePlay && expected && <p className="note-details">สาย {expected.string + 1} · เฟรต {expected.fret} <span className="ml-2">{step}/{song.notes.length}</span></p>}
-                </div>
-                {!freePlay && !complete && <button ref={startRef} type="button" disabled={!ready || starting} onClick={practicing ? () => { pausePractice(); setFeedback("พักแล้ว · กดฝึกต่อเมื่อต้องการกลับมาเล่น"); } : () => { void startPractice(); }} className="ui-button ui-primary">{!practicing && <PlayIcon className="size-4" />}{starting ? "กำลังเปิดเสียง…" : practicing ? "พักการฝึก" : record && (step > 0 || mistakes > 0) ? "ฝึกต่อ" : "เริ่มฝึก"}</button>}
+          <section className="ui-panel current-note-panel practice-current" aria-label={freePlay ? "โน้ตที่เล่นล่าสุด" : "โน้ตปัจจุบัน"}>
+            <div className="current-note-top">
+              <div>
+                <p className="note-eyebrow">{freePlay ? "โน้ตที่เล่นล่าสุด" : complete ? "ฝึกสำเร็จ" : "โน้ตปัจจุบัน"}</p>
+                <p className="current-note">{freePlay ? lastNote.split(" · ")[0] || "ลองดีดสาย" : complete ? "ครบทุกโน้ต ✓" : expected?.label}</p>
+                {!freePlay && expected && <p className="note-details">สาย {expected.string + 1} · เฟรต {expected.fret} <span className="ml-2">{step}/{song.notes.length}</span></p>}
               </div>
-              {!freePlay && <progress className="mt-3" value={step} max={song.notes.length} aria-label="ความคืบหน้าการฝึก" />}
+              {!freePlay && !complete && <button ref={startRef} type="button" disabled={!ready || starting} onClick={practicing ? () => { pausePractice(); setFeedback("พักแล้ว · กดฝึกต่อเมื่อต้องการกลับมาเล่น"); } : () => { void startPractice(); }} className="ui-button ui-primary">{!practicing && <PlayIcon className="size-4" />}{starting ? "กำลังเปิดเสียง…" : practicing ? "พักการฝึก" : record && (step > 0 || mistakes > 0) ? "ฝึกต่อ" : "เริ่มฝึก"}</button>}
             </div>
-            <div className={`ui-panel touch-panel ${cameraLive ? "order-3" : "order-2"}`}>
+            {!freePlay && <progress className="mt-3" value={step} max={song.notes.length} aria-label="ความคืบหน้าการฝึก" />}
+          </section>
+          <section aria-label="พื้นที่เล่นพิณ" className="practice-playing">
+            <div className={`ui-panel touch-panel ${cameraLive ? "order-2" : "order-1"}`}>
               <TouchPinControls frets={frets} activeString={activeString} expected={practicing ? expected : undefined} onSelectFret={selectFret} onPluck={pluckString} />
               <p role="status" aria-atomic="true" className="mt-3 min-h-12 text-sm leading-6 text-slate-700">{feedback || (freePlay ? "เลือกเฟรตแล้วดีดได้เลย ไม่ต้องใช้กล้อง" : complete ? "ฝึกครบแล้ว · ดูสรุปผลหรือเริ่มรอบใหม่ได้ด้านล่าง" : step > 0 || mistakes > 0 ? "พบผลฝึกเดิม · กดฝึกต่อเพื่อเล่นจากโน้ตที่ค้างไว้" : "ลองเสียงได้ทันที หรือกดเริ่มฝึกเพื่อเก็บคะแนน")}</p>
               {freePlay && lastNote && <p className="text-sm font-medium text-blue-800">{lastNote}</p>}
             </div>
-            <VirtualPinCamera frets={frets} activeString={activeString} expected={practicing ? expected : undefined} onSelectFret={selectFret} onPluck={pluckString} onUnlockAudio={() => { void unlock(); }} defaultFacing={preferences.facing} onLiveChange={setCameraLive} className={cameraLive ? "order-2" : "order-3"} />
+            <VirtualPinCamera frets={frets} activeString={activeString} expected={practicing ? expected : undefined} onSelectFret={selectFret} onPluck={pluckString} onUnlockAudio={() => { void unlock(); }} defaultFacing={preferences.facing} onLiveChange={setCameraLive} className={cameraLive ? "order-1" : "order-2"} />
           </section>
           <aside aria-label="ผลการฝึกและเครื่องมือ" className="practice-sidebar">
-            {!freePlay && <section className="ui-panel">
+            {!freePlay && !complete && <section className="ui-panel practice-next"><h2 className="text-lg font-semibold">โน้ตถัดไป</h2><ol className="next-notes">{song.notes.slice(step + 1, step + 4).map((note, index) => <li key={index} className="min-w-0"><p className="text-lg font-semibold">{note.label}</p><p className="text-xs text-slate-600">สาย {note.string + 1}<br />เฟรต {note.fret}</p></li>)}</ol>{step === song.notes.length - 1 && <p className="mt-2 text-sm text-slate-600">เหลือโน้ตสุดท้ายแล้ว</p>}</section>}
+            <section className="ui-panel practice-audio">
+              <h2 className="text-lg font-semibold">เสียงและจังหวะ</h2>
+              <div className="mt-3 grid gap-2">
+                <button type="button" onClick={() => { void testAudio(); }} className="ui-button"><VolumeIcon className="size-4" />{audioStatus === "ready" ? "ทดสอบเสียง · พร้อม" : "เปิดและทดสอบเสียง"}</button>
+                <button type="button" aria-pressed={metronome} onClick={async () => { if (metronome) { setMetronome(false); return; } const operation = operationRef.current; if (await unlock() && operation === operationRef.current) setMetronome(true); }} className="ui-button"><ClockIcon className="size-4" />เมโทรนอม {metronome ? "เปิด" : "ปิด"} · {song.bpm} BPM</button>
+                {audioError && <p role="alert" className="text-sm text-red-800">{audioError}</p>}
+                <Link href="/settings" className="ui-button">ตั้งค่าเสียงและกล้อง</Link>
+              </div>
+            </section>
+            {!freePlay && <section className="ui-panel practice-results">
               <h2 ref={resultRef} tabIndex={-1} className="text-lg font-semibold">{complete ? "สรุปการฝึก" : "ผลการฝึกรอบนี้"}</h2>
               <dl className="practice-stats">
                 <div><dt>สายและเฟรตถูกต้อง</dt><dd>{accuracy === null ? "—" : `${accuracy}%`}</dd></div>
@@ -191,17 +201,7 @@ export function VirtualPinStudio({ song, freePlay = false }: { song: Song; freeP
                 <div className="mt-3 flex flex-wrap gap-2"><button ref={cancelRef} type="button" className="ui-button" onClick={() => { setRestartPending(false); restartRef.current?.focus(); }}>เก็บผลเดิม</button><button type="button" className="ui-button ui-primary" onClick={resetPractice}>ยืนยันเริ่มใหม่</button></div>
               </div>}
             </section>}
-            <section className="ui-panel">
-              <h2 className="text-lg font-semibold">เสียงและจังหวะ</h2>
-              <div className="mt-3 grid gap-2">
-                <button type="button" onClick={() => { void testAudio(); }} className="ui-button"><VolumeIcon className="size-4" />{audioStatus === "ready" ? "ทดสอบเสียง · พร้อม" : "เปิดและทดสอบเสียง"}</button>
-                <button type="button" aria-pressed={metronome} onClick={async () => { if (metronome) { setMetronome(false); return; } const operation = operationRef.current; if (await unlock() && operation === operationRef.current) setMetronome(true); }} className="ui-button"><ClockIcon className="size-4" />เมโทรนอม {metronome ? "เปิด" : "ปิด"} · {song.bpm} BPM</button>
-                {audioError && <p role="alert" className="text-sm text-red-800">{audioError}</p>}
-                <Link href="/settings" className="ui-button">ตั้งค่าเสียงและกล้อง</Link>
-              </div>
-            </section>
-            {!freePlay && !complete && <section className="ui-panel"><h2 className="text-lg font-semibold">โน้ตถัดไป</h2><ol className="next-notes">{song.notes.slice(step + 1, step + 4).map((note, index) => <li key={index} className="min-w-0"><p className="text-lg font-semibold">{note.label}</p><p className="text-xs text-slate-600">สาย {note.string + 1}<br />เฟรต {note.fret}</p></li>)}</ol>{step === song.notes.length - 1 && <p className="mt-2 text-sm text-slate-600">เหลือโน้ตสุดท้ายแล้ว</p>}</section>}
-            <details className="ui-panel text-sm leading-6 text-slate-700">
+            <details className="ui-panel practice-help text-sm leading-6 text-slate-700">
               <summary className="min-h-11 cursor-pointer font-semibold text-[#102544]">วิธีเล่นและข้อมูลแบบฝึก</summary>
               <ol className="mt-3 list-decimal space-y-2 pl-5"><li>เลือกเฟรต 0–6 ของสายที่ต้องการ แล้วกด “ดีด”</li><li>โหมดเพลง: กดเริ่ม แล้วเล่นตามสายและเฟรตในกล่องโน้ตปัจจุบัน</li><li>เปิดกล้องเมื่อต้องการใช้มือจริง หรือใช้ปุ่มหน้าจอต่อได้เสมอ</li></ol>
               <p className="mt-3">{preferences.shortcuts ? "ปุ่มลัดเปิดอยู่: 1 / 2 / 3 สำหรับดีดแต่ละสาย" : "เปิดปุ่มลัด 1 / 2 / 3 ได้ที่หน้าตั้งค่า"}</p>
