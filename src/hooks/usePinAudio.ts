@@ -265,6 +265,66 @@ export function usePinAudio(volume = 0.8) {
     return true;
   }, [getContext, getMediaPlayers, unlock, volume]);
 
+  const percussion = useCallback(async (step: number, level = 0.7) => {
+    if (!(await unlock())) return false;
+
+    if (shouldUseHtmlAudio()) {
+      try {
+        const voices = getMediaPlayers().click;
+        const voiceIndex = nextClickVoiceRef.current;
+        const player = voices[voiceIndex];
+        nextClickVoiceRef.current = (voiceIndex + 1) % voices.length;
+        player.pause();
+        player.currentTime = 0;
+        player.volume = Math.min(1, level * volume * 0.72);
+        player.playbackRate = step % 4 === 0 ? 0.58 : step % 2 === 0 ? 0.82 : 1.55;
+        await player.play();
+        return true;
+      } catch (reason) {
+        console.error("HTML audio percussion failed", reason);
+        return false;
+      }
+    }
+
+    const context = getContext();
+    const master = masterRef.current;
+    if (!master) return false;
+    master.gain.value = 0.78;
+    const now = context.currentTime + 0.004;
+    const withinBar = step % 8;
+    const kind = withinBar === 0 || withinBar === 4 ? "kick" : withinBar === 2 || withinBar === 6 ? "snare" : "hat";
+    const gain = context.createGain();
+    gain.connect(master);
+
+    if (kind === "kick") {
+      const oscillator = context.createOscillator();
+      oscillator.frequency.setValueAtTime(122, now);
+      oscillator.frequency.exponentialRampToValueAtTime(46, now + 0.18);
+      gain.gain.setValueAtTime(level * volume * 0.72, now);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.26);
+      oscillator.connect(gain);
+      oscillator.start(now);
+      oscillator.stop(now + 0.28);
+      return true;
+    }
+
+    const duration = kind === "snare" ? 0.18 : 0.065;
+    const buffer = context.createBuffer(1, Math.ceil(context.sampleRate * duration), context.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let index = 0; index < data.length; index += 1) data[index] = Math.random() * 2 - 1;
+    const noise = context.createBufferSource();
+    const filter = context.createBiquadFilter();
+    filter.type = "highpass";
+    filter.frequency.value = kind === "snare" ? 950 : 5_800;
+    gain.gain.setValueAtTime(level * volume * (kind === "snare" ? 0.46 : 0.18), now);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+    noise.buffer = buffer;
+    noise.connect(filter).connect(gain);
+    noise.start(now);
+    noise.stop(now + duration);
+    return true;
+  }, [getContext, getMediaPlayers, unlock, volume]);
+
   useEffect(() => () => {
     void contextRef.current?.close();
     if (mediaRef.current) {
@@ -276,5 +336,5 @@ export function usePinAudio(volume = 0.8) {
     }
   }, []);
 
-  return { unlock, pluck, click, status, error };
+  return { unlock, pluck, click, percussion, status, error };
 }

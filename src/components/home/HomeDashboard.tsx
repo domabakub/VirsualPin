@@ -13,7 +13,7 @@ import { PinHeroArt } from "./PinHeroArt";
 const actions = [
   { href: "/play/free-play", title: "เริ่มจากความสนุก", description: "เลือกสาย ลองดีด แล้วค้นหาเสียงที่ชอบ ไม่ต้องมีพื้นฐาน", label: "เล่นอิสระ", icon: PlayIcon, number: "01" },
   { href: "/songs?category=learn", title: "ค่อย ๆ รู้จักพิณ", description: "เรียนรู้สายและเฟรตทีละโน้ต ตามจังหวะที่สบายสำหรับคุณ", label: "เริ่มต้นเรียน", icon: BookIcon, number: "02" },
-  { href: "/songs", title: "ต่อยอดทุกวัน", description: "เลือกแบบฝึกที่อยากเล่น พักได้ และกลับมาฝึกต่อเมื่อพร้อม", label: "สำรวจคลังเพลง", icon: MusicIcon, number: "03" },
+  { href: "/studio", title: "เปลี่ยนเสียงเป็นเพลง", description: "อัดลายพิณ วางจังหวะ แก้โน้ต และส่งออกเป็น WAV หรือ MIDI", label: "เปิด Studio", icon: MusicIcon, number: "03" },
 ];
 
 export function HomeDashboard() {

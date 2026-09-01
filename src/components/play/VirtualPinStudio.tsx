@@ -183,6 +183,7 @@ export function VirtualPinStudio({ song, freePlay = false }: { song: Song; freeP
                 <button type="button" onClick={() => { void testAudio(); }} className="ui-button"><VolumeIcon className="size-4" />{audioStatus === "ready" ? "ทดสอบเสียง · พร้อม" : "เปิดและทดสอบเสียง"}</button>
                 <button type="button" aria-pressed={metronome} onClick={async () => { if (metronome) { setMetronome(false); return; } const operation = operationRef.current; if (await unlock() && operation === operationRef.current) setMetronome(true); }} className="ui-button"><ClockIcon className="size-4" />เมโทรนอม {metronome ? "เปิด" : "ปิด"} · {song.bpm} BPM</button>
                 {audioError && <p role="alert" className="text-sm text-red-800">{audioError}</p>}
+                {freePlay && <Link href="/studio" className="ui-button ui-primary">เปิด Studio Mode</Link>}
                 <Link href="/settings" className="ui-button">ตั้งค่าเสียงและกล้อง</Link>
               </div>
             </section>
