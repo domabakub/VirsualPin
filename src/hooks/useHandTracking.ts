@@ -2,7 +2,7 @@
 
 import { FilesetResolver, HandLandmarker } from "@mediapipe/tasks-vision";
 import { useEffect, useRef, useState, type RefObject } from "react";
-import { drawHands } from "@/lib/hand-tracking/drawing";
+import { drawHands, type HandDrawingMode } from "@/lib/hand-tracking/drawing";
 import { LandmarkSmoother } from "@/lib/hand-tracking/smoother";
 import type { HandSide, TrackedHand, TrackerPhase } from "@/lib/hand-tracking/types";
 
@@ -14,12 +14,24 @@ export function useHandTracking(
   videoRef: RefObject<HTMLVideoElement | null>,
   canvasRef: RefObject<HTMLCanvasElement | null>,
   active: boolean,
+  mirrored = true,
+  drawingMode: HandDrawingMode = "skeleton",
 ) {
   const [phase, setPhase] = useState<TrackerPhase>("idle");
   const [hands, setHands] = useState<TrackedHand[]>([]);
   const [fps, setFps] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const smootherRef = useRef(new LandmarkSmoother());
+  const mirroredRef = useRef(mirrored);
+  const drawingModeRef = useRef(drawingMode);
+
+  useEffect(() => {
+    mirroredRef.current = mirrored;
+  }, [mirrored]);
+
+  useEffect(() => {
+    drawingModeRef.current = drawingMode;
+  }, [drawingMode]);
 
   useEffect(() => {
     const smoother = smootherRef.current;
@@ -52,9 +64,9 @@ export function useHandTracking(
             baseOptions: { modelAssetPath: MODEL_URL, delegate: "GPU" },
             runningMode: "VIDEO",
             numHands: 2,
-            minHandDetectionConfidence: 0.55,
-            minHandPresenceConfidence: 0.5,
-            minTrackingConfidence: 0.5,
+            minHandDetectionConfidence: 0.45,
+            minHandPresenceConfidence: 0.45,
+            minTrackingConfidence: 0.45,
           });
         } catch {
           // Some older iPads cannot initialize WebGL; CPU keeps the experience usable.
@@ -62,9 +74,9 @@ export function useHandTracking(
             baseOptions: { modelAssetPath: MODEL_URL, delegate: "CPU" },
             runningMode: "VIDEO",
             numHands: 2,
-            minHandDetectionConfidence: 0.55,
-            minHandPresenceConfidence: 0.5,
-            minTrackingConfidence: 0.5,
+            minHandDetectionConfidence: 0.45,
+            minHandPresenceConfidence: 0.45,
+            minTrackingConfidence: 0.45,
           });
         }
 
@@ -94,7 +106,12 @@ export function useHandTracking(
           const result = landmarker.detectForVideo(video, now);
           const nextHands: TrackedHand[] = result.landmarks.map((landmarks, index) => {
             const category = result.handedness[index]?.[0];
-            const side: HandSide = category?.categoryName === "Left" ? "Left" : "Right";
+            const classifiedSide: HandSide = category?.categoryName === "Left" ? "Left" : "Right";
+            // MediaPipe's handedness follows selfie/mirrored input. Rear-camera
+            // frames are not mirrored, so swap the label back to anatomical side.
+            const side: HandSide = mirroredRef.current
+              ? classifiedSide
+              : classifiedSide === "Left" ? "Right" : "Left";
             return {
               side,
               confidence: category?.score ?? 0,
@@ -102,7 +119,7 @@ export function useHandTracking(
             };
           });
           setHands(nextHands);
-          drawHands(canvas, video, nextHands);
+          drawHands(canvas, video, nextHands, mirroredRef.current, drawingModeRef.current);
 
           frames += 1;
           const elapsed = now - fpsStartedAt;

@@ -1,0 +1,176 @@
+[
+  {
+    "viewport": 320,
+    "path": "/",
+    "activeNav": "หน้าหลัก",
+    "main": 1,
+    "scroll": 305,
+    "width": 305
+  },
+  {
+    "viewport": 320,
+    "path": "/songs",
+    "activeNav": "คลังเพลง",
+    "main": 1,
+    "scroll": 305,
+    "width": 305
+  },
+  {
+    "viewport": 320,
+    "path": "/songs?category=learn",
+    "activeNav": "พื้นฐาน",
+    "main": 1,
+    "scroll": 305,
+    "width": 305
+  },
+  {
+    "viewport": 320,
+    "path": "/play/lao-duang-duen",
+    "activeNav": null,
+    "main": 1,
+    "scroll": 305,
+    "width": 305
+  },
+  {
+    "viewport": 320,
+    "path": "/play/free-play",
+    "activeNav": null,
+    "main": 1,
+    "scroll": 305,
+    "width": 305
+  },
+  {
+    "viewport": 320,
+    "path": "/settings",
+    "activeNav": "ตั้งค่า",
+    "main": 1,
+    "scroll": 305,
+    "width": 305
+  },
+  {
+    "viewport": 768,
+    "path": "/",
+    "main": 1,
+    "scroll": 753,
+    "width": 753
+  },
+  {
+    "viewport": 768,
+    "path": "/songs",
+    "main": 1,
+    "scroll": 753,
+    "width": 753
+  },
+  {
+    "viewport": 768,
+    "path": "/songs?category=learn",
+    "main": 1,
+    "scroll": 768,
+    "width": 768
+  },
+  {
+    "viewport": 768,
+    "path": "/play/lao-duang-duen",
+    "main": 1,
+    "scroll": 753,
+    "width": 753
+  },
+  {
+    "viewport": 768,
+    "path": "/play/free-play",
+    "main": 1,
+    "scroll": 753,
+    "width": 753
+  },
+  {
+    "viewport": 768,
+    "path": "/settings",
+    "main": 1,
+    "scroll": 768,
+    "width": 768
+  },
+  {
+    "viewport": 1280,
+    "path": "/",
+    "main": 1,
+    "scroll": 1265,
+    "width": 1265
+  },
+  {
+    "viewport": 1280,
+    "path": "/songs",
+    "main": 1,
+    "scroll": 1265,
+    "width": 1265
+  },
+  {
+    "viewport": 1280,
+    "path": "/songs?category=learn",
+    "main": 1,
+    "scroll": 1265,
+    "width": 1265
+  },
+  {
+    "viewport": 1280,
+    "path": "/play/lao-duang-duen",
+    "main": 1,
+    "scroll": 1265,
+    "width": 1265
+  },
+  {
+    "viewport": 1280,
+    "path": "/play/free-play",
+    "main": 1,
+    "scroll": 1265,
+    "width": 1265
+  },
+  {
+    "viewport": 1280,
+    "path": "/settings",
+    "main": 1,
+    "scroll": 1265,
+    "width": 1265
+  },
+  {
+    "viewport": 390,
+    "path": "/",
+    "main": 1,
+    "scroll": 375,
+    "width": 375
+  },
+  {
+    "viewport": 390,
+    "path": "/songs",
+    "main": 1,
+    "scroll": 375,
+    "width": 375
+  },
+  {
+    "viewport": 390,
+    "path": "/songs?category=learn",
+    "main": 1,
+    "scroll": 375,
+    "width": 375
+  },
+  {
+    "viewport": 390,
+    "path": "/play/lao-duang-duen",
+    "main": 1,
+    "scroll": 375,
+    "width": 375
+  },
+  {
+    "viewport": 390,
+    "path": "/play/free-play",
+    "main": 1,
+    "scroll": 375,
+    "width": 375
+  },
+  {
+    "viewport": 390,
+    "path": "/settings",
+    "main": 1,
+    "scroll": 375,
+    "width": 375
+  }
+]

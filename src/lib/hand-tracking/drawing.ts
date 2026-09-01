@@ -1,4 +1,7 @@
 import type { TrackedHand } from "./types";
+import { RIGHT_PINCH } from "./virtualPinInteraction";
+
+export type HandDrawingMode = "skeleton" | "instrument";
 
 const CONNECTIONS: ReadonlyArray<readonly [number, number]> = [
   [0, 1], [1, 2], [2, 3], [3, 4],
@@ -17,13 +20,14 @@ function project(
   sourceHeight: number,
   viewWidth: number,
   viewHeight: number,
+  mirrored: boolean,
 ): Projection {
-  // Camera is mirrored, then cropped with object-fit: cover.
+  // Front camera is mirrored like a selfie; rear camera keeps sensor coordinates.
   const scale = Math.max(viewWidth / sourceWidth, viewHeight / sourceHeight);
   const renderedWidth = sourceWidth * scale;
   const renderedHeight = sourceHeight * scale;
   return {
-    x: (1 - x) * renderedWidth + (viewWidth - renderedWidth) / 2,
+    x: (mirrored ? 1 - x : x) * renderedWidth + (viewWidth - renderedWidth) / 2,
     y: y * renderedHeight + (viewHeight - renderedHeight) / 2,
   };
 }
@@ -32,6 +36,8 @@ export function drawHands(
   canvas: HTMLCanvasElement,
   video: HTMLVideoElement,
   hands: TrackedHand[],
+  mirrored: boolean,
+  mode: HandDrawingMode = "skeleton",
 ) {
   const bounds = canvas.getBoundingClientRect();
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -55,8 +61,87 @@ export function drawHands(
   for (const hand of hands) {
     const color = hand.side === "Left" ? "#f4b94f" : "#67ef98";
     const points = hand.landmarks.map((landmark) =>
-      project(landmark.x, landmark.y, video.videoWidth, video.videoHeight, width, height),
+      project(landmark.x, landmark.y, video.videoWidth, video.videoHeight, width, height, mirrored),
     );
+
+    if (mode === "instrument") {
+      context.shadowBlur = 0;
+      if (hand.side === "Left") {
+        // Thumb is the pinch modifier; fingers 1, 2 and 3 map to strings.
+        const thumbPoint = points[4];
+        context.beginPath();
+        context.arc(thumbPoint.x, thumbPoint.y, 8, 0, Math.PI * 2);
+        context.fillStyle = "rgba(141, 86, 36, .72)";
+        context.fill();
+        context.lineWidth = 2;
+        context.strokeStyle = "rgba(255, 232, 185, .95)";
+        context.stroke();
+        context.fillStyle = "#fff2d6";
+        context.font = "600 9px system-ui";
+        context.textAlign = "center";
+        context.textBaseline = "middle";
+        context.fillText("T", thumbPoint.x, thumbPoint.y + 0.5);
+
+        [8, 12, 16].forEach((tipIndex, fingerIndex) => {
+          const point = points[tipIndex];
+          context.beginPath();
+          context.arc(point.x, point.y, 8, 0, Math.PI * 2);
+          context.fillStyle = "rgba(20, 15, 10, .55)";
+          context.fill();
+          context.lineWidth = 2;
+          context.strokeStyle = "rgba(255, 232, 185, .95)";
+          context.stroke();
+          context.fillStyle = "#fff2d6";
+          context.font = "600 9px system-ui";
+          context.textAlign = "center";
+          context.textBaseline = "middle";
+          context.fillText(String(fingerIndex + 1), point.x, point.y + 0.5);
+        });
+      } else {
+        // Thumb + index become one focus point while pinched.
+        const thumbPoint = points[4];
+        const indexPoint = points[8];
+        const palmScale = Math.max(0.0001, Math.hypot(
+          hand.landmarks[5].x - hand.landmarks[17].x,
+          hand.landmarks[5].y - hand.landmarks[17].y,
+          (hand.landmarks[5].z ?? 0) - (hand.landmarks[17].z ?? 0),
+        ));
+        const pinchRatio = Math.hypot(
+          hand.landmarks[4].x - hand.landmarks[8].x,
+          hand.landmarks[4].y - hand.landmarks[8].y,
+          (hand.landmarks[4].z ?? 0) - (hand.landmarks[8].z ?? 0),
+        ) / palmScale;
+
+        if (pinchRatio <= RIGHT_PINCH.releaseRatio) {
+          const focusPoint = {
+            x: (thumbPoint.x + indexPoint.x) / 2,
+            y: (thumbPoint.y + indexPoint.y) / 2,
+          };
+          context.beginPath();
+          context.arc(focusPoint.x, focusPoint.y, 14, 0, Math.PI * 2);
+          context.fillStyle = "rgba(103, 239, 152, .18)";
+          context.fill();
+          context.beginPath();
+          context.arc(focusPoint.x, focusPoint.y, 6, 0, Math.PI * 2);
+          context.fillStyle = "#fff4d6";
+          context.fill();
+          context.lineWidth = 2.5;
+          context.strokeStyle = "#4ecf7c";
+          context.stroke();
+        } else {
+          [thumbPoint, indexPoint].forEach((point) => {
+            context.beginPath();
+            context.arc(point.x, point.y, 6, 0, Math.PI * 2);
+            context.fillStyle = "rgba(20, 15, 10, .45)";
+            context.fill();
+            context.lineWidth = 1.5;
+            context.strokeStyle = "rgba(255, 244, 214, .8)";
+            context.stroke();
+          });
+        }
+      }
+      continue;
+    }
 
     context.lineCap = "round";
     context.lineJoin = "round";
@@ -93,5 +178,7 @@ export function drawHands(
     context.fillStyle = color;
     context.font = "600 12px system-ui";
     context.fillText(`${hand.side === "Left" ? "มือซ้าย" : "มือขวา"} ${Math.round(hand.confidence * 100)}%`, labelX + 9, labelY - 5);
+    context.textAlign = "start";
+    context.textBaseline = "alphabetic";
   }
 }

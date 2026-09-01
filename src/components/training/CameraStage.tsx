@@ -10,14 +10,15 @@ export function CameraStage() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const camera = useCamera(videoRef);
-  const tracker = useHandTracking(videoRef, canvasRef, camera.phase === "ready");
+  const mirrored = camera.facing === "user";
+  const tracker = useHandTracking(videoRef, canvasRef, camera.phase === "ready", mirrored);
   const isLive = camera.phase === "ready";
   const message = camera.error ?? tracker.error;
 
   return (
     <section className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_280px] gap-4 max-[900px]:grid-cols-1">
       <div className="glass relative min-h-[520px] overflow-hidden rounded-[28px] max-sm:min-h-[480px]">
-        <video ref={videoRef} muted playsInline className={`absolute inset-0 size-full scale-x-[-1] object-cover transition-opacity duration-700 ${isLive ? "opacity-100" : "opacity-0"}`} />
+        <video ref={videoRef} muted playsInline className={`absolute inset-0 size-full object-cover transition-opacity duration-700 ${mirrored ? "scale-x-[-1]" : "scale-x-100"} ${isLive ? "opacity-100" : "opacity-0"}`} />
         <canvas ref={canvasRef} aria-label="โครงกระดูกมือที่ตรวจจับได้" className="pointer-events-none absolute inset-0 size-full" />
 
         <div className="studio-grid absolute inset-0 -z-10" />

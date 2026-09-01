@@ -48,6 +48,10 @@ export function ArrowIcon(props: IconProps) {
   return <svg {...base} {...props}><path d="M5 12h14M13 6l6 6-6 6"/></svg>;
 }
 
+export function CubeIcon(props: IconProps) {
+  return <svg {...base} {...props}><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Z"/><path d="m4.5 7.8 7.5 4.3 7.5-4.3M12 12.1V21"/></svg>;
+}
+
 export function SearchIcon(props: IconProps) {
   return <svg {...base} {...props}><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>;
 }

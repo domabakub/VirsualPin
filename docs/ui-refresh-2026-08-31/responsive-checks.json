@@ -1,0 +1,176 @@
+[
+  {
+    "viewport": 320,
+    "path": "/",
+    "bodyFont": "inter, thai, -apple-system, BlinkMacSystemFont, sans-serif",
+    "main": 1,
+    "scroll": 305,
+    "width": 305
+  },
+  {
+    "viewport": 320,
+    "path": "/songs",
+    "bodyFont": "inter, thai, -apple-system, BlinkMacSystemFont, sans-serif",
+    "main": 1,
+    "scroll": 305,
+    "width": 305
+  },
+  {
+    "viewport": 320,
+    "path": "/songs?category=learn",
+    "bodyFont": "inter, thai, -apple-system, BlinkMacSystemFont, sans-serif",
+    "main": 1,
+    "scroll": 305,
+    "width": 305
+  },
+  {
+    "viewport": 320,
+    "path": "/play/lao-duang-duen",
+    "bodyFont": "inter, thai, -apple-system, BlinkMacSystemFont, sans-serif",
+    "main": 1,
+    "scroll": 305,
+    "width": 305
+  },
+  {
+    "viewport": 320,
+    "path": "/play/free-play",
+    "bodyFont": "inter, thai, -apple-system, BlinkMacSystemFont, sans-serif",
+    "main": 1,
+    "scroll": 305,
+    "width": 305
+  },
+  {
+    "viewport": 320,
+    "path": "/settings",
+    "bodyFont": "inter, thai, -apple-system, BlinkMacSystemFont, sans-serif",
+    "main": 1,
+    "scroll": 305,
+    "width": 305
+  },
+  {
+    "viewport": 390,
+    "path": "/",
+    "main": 1,
+    "scroll": 375,
+    "width": 375
+  },
+  {
+    "viewport": 390,
+    "path": "/songs",
+    "main": 1,
+    "scroll": 375,
+    "width": 375
+  },
+  {
+    "viewport": 390,
+    "path": "/songs?category=learn",
+    "main": 1,
+    "scroll": 375,
+    "width": 375
+  },
+  {
+    "viewport": 390,
+    "path": "/play/lao-duang-duen",
+    "main": 1,
+    "scroll": 375,
+    "width": 375
+  },
+  {
+    "viewport": 390,
+    "path": "/play/free-play",
+    "main": 1,
+    "scroll": 375,
+    "width": 375
+  },
+  {
+    "viewport": 390,
+    "path": "/settings",
+    "main": 1,
+    "scroll": 375,
+    "width": 375
+  },
+  {
+    "viewport": 768,
+    "path": "/",
+    "main": 1,
+    "scroll": 753,
+    "width": 753
+  },
+  {
+    "viewport": 768,
+    "path": "/songs",
+    "main": 1,
+    "scroll": 753,
+    "width": 753
+  },
+  {
+    "viewport": 768,
+    "path": "/songs?category=learn",
+    "main": 1,
+    "scroll": 768,
+    "width": 768
+  },
+  {
+    "viewport": 768,
+    "path": "/play/lao-duang-duen",
+    "main": 1,
+    "scroll": 753,
+    "width": 753
+  },
+  {
+    "viewport": 768,
+    "path": "/play/free-play",
+    "main": 1,
+    "scroll": 753,
+    "width": 753
+  },
+  {
+    "viewport": 768,
+    "path": "/settings",
+    "main": 1,
+    "scroll": 753,
+    "width": 753
+  },
+  {
+    "viewport": 1440,
+    "path": "/",
+    "main": 1,
+    "scroll": 1425,
+    "width": 1425
+  },
+  {
+    "viewport": 1440,
+    "path": "/songs",
+    "main": 1,
+    "scroll": 1425,
+    "width": 1425
+  },
+  {
+    "viewport": 1440,
+    "path": "/songs?category=learn",
+    "main": 1,
+    "scroll": 1440,
+    "width": 1440
+  },
+  {
+    "viewport": 1440,
+    "path": "/play/lao-duang-duen",
+    "main": 1,
+    "scroll": 1425,
+    "width": 1425
+  },
+  {
+    "viewport": 1440,
+    "path": "/play/free-play",
+    "main": 1,
+    "scroll": 1440,
+    "width": 1440
+  },
+  {
+    "viewport": 1440,
+    "path": "/settings",
+    "main": 1,
+    "scroll": 1425,
+    "width": 1425
+  }
+]

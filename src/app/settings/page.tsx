@@ -1,11 +1,29 @@
+"use client";
+
 import Link from "next/link";
-import { AppBrand } from "@/components/navigation/AppBrand";
+import { useState } from "react";
+import { AppHeader } from "@/components/navigation/AppHeader";
+import { AppFooter } from "@/components/navigation/AppFooter";
 import { BottomNav } from "@/components/navigation/BottomNav";
+import { savePreferences, usePracticeData } from "@/hooks/usePracticeData";
+import type { Preferences } from "@/lib/practice";
 
 export default function SettingsPage() {
-  return (
-    <div className="min-h-screen bg-[#f8faff] text-[#102544]">
-      <div className="mx-auto max-w-3xl px-5 pt-6"><AppBrand /><section className="mt-12 rounded-[30px] border border-slate-100 bg-white p-7 shadow-sm"><p className="text-xs font-bold tracking-[.2em] text-blue-500">SETTINGS</p><h1 className="mt-3 font-serif text-4xl">ตั้งค่าการฝึก</h1><div className="mt-8 space-y-4"><div className="flex items-center justify-between rounded-2xl bg-slate-50 p-4"><div><p className="font-medium">กล้องเริ่มต้น</p><p className="text-xs text-slate-400">ใช้กล้องหน้าเพื่อให้ภาพเหมือนกระจก</p></div><span className="rounded-full bg-blue-100 px-3 py-1 text-xs text-blue-600">กล้องหน้า</span></div><div className="flex items-center justify-between rounded-2xl bg-slate-50 p-4"><div><p className="font-medium">ความไวของ Hand Tracking</p><p className="text-xs text-slate-400">ค่ากลางเหมาะกับการใช้งานทั่วไป</p></div><span className="rounded-full bg-emerald-100 px-3 py-1 text-xs text-emerald-700">ปานกลาง</span></div></div><Link href="/" className="mt-8 inline-block text-sm font-medium text-blue-600">← กลับหน้าหลัก</Link></section></div><BottomNav />
-    </div>
-  );
+  const { preferences, ready, storageTemporary } = usePracticeData();
+  const [changed, setChanged] = useState(false);
+  function update(value: Partial<Preferences>) { savePreferences(value); setChanged(true); }
+  return <div className="app-shell settings-page">
+    <AppHeader active="settings" />
+    <main id="main-content" tabIndex={-1} className="settings-main">
+      <div className="settings-heading"><p className="eyebrow">MAKE IT YOURS</p><h1>เล่นในแบบที่ถนัด.</h1><p className="page-description">รายละเอียดเล็ก ๆ เพื่อประสบการณ์ที่เป็นคุณ</p></div>
+      <fieldset disabled={!ready} className="settings-group"><legend className="sr-only">เสียง กล้อง และปุ่มลัด</legend>
+        <div className="settings-row settings-camera"><div><label htmlFor="camera-facing" className="setting-label">กล้องเริ่มต้น</label><p id="camera-hint" className="setting-hint">เลือกมุมมองที่สะดวกสำหรับคุณ</p></div><select id="camera-facing" aria-describedby="camera-hint" value={preferences.facing} onChange={e => update({ facing: e.target.value as Preferences["facing"] })}><option value="user">กล้องหน้า · กระจก</option><option value="environment">กล้องหลัง · ภาพจริง</option></select></div>
+        <div className="settings-row"><div className="volume-label"><label htmlFor="volume" className="setting-label">ระดับเสียง</label><output htmlFor="volume">{Math.round(preferences.volume * 100)}%</output></div><p className="setting-hint">เสียงพิณและเมโทรนอม</p><div className="volume-control"><button type="button" aria-label="ลดเสียง 5 เปอร์เซ็นต์" disabled={preferences.volume === 0} onClick={() => update({ volume: Math.max(0, Math.round(preferences.volume * 100 - 5) / 100) })} className="volume-step">−</button><input id="volume" type="range" min="0" max="100" step="5" value={Math.round(preferences.volume * 100)} onChange={e => update({ volume: Number(e.target.value) / 100 })} /><button type="button" aria-label="เพิ่มเสียง 5 เปอร์เซ็นต์" disabled={preferences.volume === 1} onClick={() => update({ volume: Math.min(1, Math.round(preferences.volume * 100 + 5) / 100) })} className="volume-step">+</button></div>{preferences.volume === 0 && <p className="setting-hint">ปิดเสียงอยู่ · เพิ่มระดับเสียงเพื่อฟังพิณ</p>}</div>
+        <label className="settings-row shortcut-row" htmlFor="keyboard-shortcuts"><span><span className="setting-label">ปุ่มลัดคีย์บอร์ด</span><span className="setting-hint">ใช้ปุ่ม 1 / 2 / 3 เพื่อดีดแต่ละสาย</span></span><span className="switch-control"><input id="keyboard-shortcuts" type="checkbox" checked={preferences.shortcuts} onChange={e => update({ shortcuts: e.target.checked })} /><span aria-hidden="true" className="switch-track" /></span></label>
+      </fieldset>
+      <p role="status" className={`settings-status ${storageTemporary ? "text-red-800" : ""}`}>{storageTemporary ? "บันทึกถาวรไม่ได้ การตั้งค่านี้ใช้ได้เฉพาะครั้งนี้" : !ready ? "กำลังอ่านการตั้งค่า…" : changed ? "บันทึกการตั้งค่าแล้ว" : "บันทึกอัตโนมัติในเบราว์เซอร์นี้"}</p>
+      <section className="settings-note"><h2>เรียบง่าย แม้ไม่ใช้กล้อง.</h2><p>ใช้ปุ่มหน้าจอเล่นพิณได้เสมอ หากเปิดกล้อง ภาพจะประมวลผลบนเครื่องของคุณ รุ่นทดลองยังไม่รองรับการปรับความไวตรวจจับมือ</p></section>
+      <Link href="/songs" className="text-link settings-back">กลับไปเลือกแบบฝึก <span aria-hidden="true">›</span></Link>
+    </main><AppFooter /><BottomNav />
+  </div>;
 }

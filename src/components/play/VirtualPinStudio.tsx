@@ -1,148 +1,215 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ChevronLeftIcon, ClockIcon, PlayIcon, VolumeIcon } from "@/components/icons";
-import { AppBrand } from "@/components/navigation/AppBrand";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { ClockIcon, PlayIcon, VolumeIcon } from "@/components/icons";
+import { AppHeader } from "@/components/navigation/AppHeader";
 import type { Song, StringIndex } from "@/data/songs";
 import { usePinAudio } from "@/hooks/usePinAudio";
+import { readPractice, savePractice, usePracticeData } from "@/hooks/usePracticeData";
+import { advancePractice, getPracticeAccuracy } from "@/lib/practice";
+import { getPinNoteName } from "@/lib/audio/pinTuning";
 import { VirtualPinCamera } from "./VirtualPinCamera";
-
-const STRING_NAMES = ["สาย 1", "สาย 2", "สาย 3"];
+import { TouchPinControls } from "./TouchPinControls";
 
 export function VirtualPinStudio({ song, freePlay = false }: { song: Song; freePlay?: boolean }) {
+  const { records, preferences, ready, storageTemporary } = usePracticeData();
+  const record = records[song.slug]?.total === song.notes.length ? records[song.slug] : undefined;
+  const step = record?.step ?? 0;
+  const mistakes = record?.mistakes ?? 0;
   const [frets, setFrets] = useState<[number, number, number]>([0, 0, 0]);
   const [activeString, setActiveString] = useState<StringIndex | null>(null);
-  const [step, setStep] = useState(0);
-  const [score, setScore] = useState(0);
-  const [mistakes, setMistakes] = useState(0);
   const [practicing, setPracticing] = useState(false);
+  const [starting, setStarting] = useState(false);
   const [metronome, setMetronome] = useState(false);
-  const [feedback, setFeedback] = useState("แตะสายพิณเพื่อทดสอบเสียง หรือกดเริ่มฝึก");
+  const [restartPending, setRestartPending] = useState(false);
+  const [feedback, setFeedback] = useState("");
+  const [lastNote, setLastNote] = useState("");
+  const [cameraLive, setCameraLive] = useState(false);
   const activeTimer = useRef<number | null>(null);
-  const { unlock, pluck, click } = usePinAudio();
+  const runningRef = useRef(false);
+  const operationRef = useRef(0);
+  const pluckingRef = useRef(false);
+  const restartRef = useRef<HTMLButtonElement>(null);
+  const cancelRef = useRef<HTMLButtonElement>(null);
+  const startRef = useRef<HTMLButtonElement>(null);
+  const resultRef = useRef<HTMLHeadingElement>(null);
+  const { unlock, pluck, click, status: audioStatus, error: audioError } = usePinAudio(preferences.volume);
   const expected = !freePlay ? song.notes[step] : undefined;
   const complete = !freePlay && step >= song.notes.length;
+  const accuracy = getPracticeAccuracy(step, mistakes);
 
   const selectFret = useCallback((string: StringIndex, fret: number) => {
-    setFrets((current) => {
+    setFrets(current => {
+      if (current[string] === fret) return current;
       const next: [number, number, number] = [...current];
       next[string] = fret;
       return next;
     });
   }, []);
 
-  const pluckString = useCallback((string: StringIndex) => {
-    void unlock();
-    pluck(string, frets[string]);
-    setActiveString(string);
-    if (activeTimer.current) window.clearTimeout(activeTimer.current);
-    activeTimer.current = window.setTimeout(() => setActiveString(null), 260);
+  const pausePractice = useCallback(() => {
+    operationRef.current += 1;
+    runningRef.current = false;
+    setPracticing(false);
+    setMetronome(false);
+    setStarting(false);
+  }, []);
 
-    if (!practicing || freePlay) {
-      setFeedback(`กำลังเล่น ${STRING_NAMES[string]} · เฟรต ${frets[string]}`);
-      return;
-    }
-    const target = song.notes[step];
-    if (!target) return;
-    if (target.string === string && target.fret === frets[string]) {
-      setScore((value) => value + 100);
-      setStep((value) => value + 1);
-      setFeedback(step + 1 === song.notes.length ? "ยอดเยี่ยม! เล่นครบทั้งท่อนแล้ว" : "ถูกต้อง · เตรียมโน้ตถัดไป");
-    } else {
-      setMistakes((value) => value + 1);
-      const positionHint = frets[target.string] === target.fret ? `ดีด ${STRING_NAMES[target.string]}` : `วางนิ้วที่ ${STRING_NAMES[target.string]} เฟรต ${target.fret}`;
-      setFeedback(`ลองอีกครั้ง · ${positionHint}`);
-    }
-  }, [freePlay, frets, practicing, song.notes, step, pluck, unlock]);
+  const pluckString = useCallback(async (string: StringIndex, fretOverride?: number) => {
+    if (pluckingRef.current) return;
+    pluckingRef.current = true;
+    const operation = operationRef.current;
+    const playedFret = fretOverride ?? frets[string];
+    try {
+      const played = await pluck(string, playedFret);
+      if (operation !== operationRef.current) return;
+      if (!played) { setFeedback("เสียงยังไม่พร้อม · กดทดสอบเสียงแล้วลองอีกครั้ง"); return; }
+      if (fretOverride !== undefined) selectFret(string, fretOverride);
+      setActiveString(string);
+      setLastNote(`${getPinNoteName(string, playedFret, true)} · สาย ${string + 1} เฟรต ${playedFret}`);
+      if (activeTimer.current) window.clearTimeout(activeTimer.current);
+      activeTimer.current = window.setTimeout(() => setActiveString(null), 220);
+      if (freePlay || !runningRef.current) {
+        setFeedback(freePlay ? "เล่นอิสระ · ไม่มีการให้คะแนน" : "กำลังลองเสียง · กดเริ่มหรือฝึกต่อเพื่อเก็บคะแนน");
+        return;
+      }
+      // Read after audio resolves so queued gestures never score against a stale note.
+      const current = readPractice(song.slug, song.notes.length) ?? { step: 0, mistakes: 0, total: song.notes.length, updatedAt: Date.now() };
+      const target = song.notes[current.step];
+      if (!target) return;
+      const correct = target.string === string && target.fret === playedFret;
+      const next = advancePractice(current, correct);
+      savePractice(song.slug, next);
+      if (next.step === song.notes.length) {
+        pausePractice();
+        setFeedback("ฝึกครบท่อนแล้ว ดูสรุปผลด้านล่างได้เลย");
+      } else {
+        const hint = correct ? song.notes[next.step] : target;
+        setFeedback(`${correct ? "ถูกต้อง · ถัดไป" : "ลองอีกครั้ง"} ${hint.label} สาย ${hint.string + 1} เฟรต ${hint.fret}`);
+      }
+    } finally { pluckingRef.current = false; }
+  }, [freePlay, frets, pausePractice, pluck, selectFret, song]);
 
-  const setTrackedFrets = useCallback((next: [number, number, number]) => setFrets(next), []);
-  const unlockAudio = useCallback(() => { void unlock(); }, [unlock]);
+  const startPractice = async () => {
+    if (starting || complete) return;
+    const operation = ++operationRef.current;
+    setStarting(true);
+    const audioReady = await unlock();
+    if (operation !== operationRef.current) return;
+    setStarting(false);
+    if (!audioReady) { setFeedback("ยังเริ่มฝึกไม่ได้ · ลองทดสอบเสียงอีกครั้ง"); return; }
+    runningRef.current = true;
+    setPracticing(true);
+    setFeedback("เริ่มได้ · เลือกเฟรตตามโน้ตด้านบน แล้วกดดีดสาย");
+  };
+
+  const testAudio = async () => {
+    const played = await pluck(0, 0);
+    setFeedback(played ? "เสียงพร้อม · ทดสอบสายเปล่า E4 แล้ว" : "เปิดเสียงไม่ได้ · ตรวจระดับเสียงหรือการปิดเสียงของอุปกรณ์");
+  };
+
+  const resetPractice = () => {
+    pausePractice();
+    savePractice(song.slug, { step: 0, mistakes: 0, total: song.notes.length, updatedAt: Date.now() });
+    setFrets([0, 0, 0]);
+    setRestartPending(false);
+    setFeedback("เริ่มรอบใหม่แล้ว · กดเริ่มฝึกเมื่อพร้อม");
+    requestAnimationFrame(() => startRef.current?.focus());
+  };
+
+  useEffect(() => { if (restartPending) cancelRef.current?.focus(); }, [restartPending]);
+  useEffect(() => { if (complete && feedback.startsWith("ฝึกครบท่อน")) resultRef.current?.focus(); }, [complete, feedback]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if (["1", "2", "3"].includes(event.key)) pluckString((Number(event.key) - 1) as StringIndex);
+      const target = event.target;
+      if (!preferences.shortcuts || event.repeat || event.altKey || event.ctrlKey || event.metaKey ||
+        (target instanceof HTMLElement && (target.isContentEditable || /INPUT|SELECT|TEXTAREA/.test(target.tagName)))) return;
+      if (["1", "2", "3"].includes(event.key)) { event.preventDefault(); void pluckString((Number(event.key) - 1) as StringIndex); }
     };
     window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [pluckString]);
+    const onVisibility = () => { if (document.hidden) pausePractice(); };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => { window.removeEventListener("keydown", onKeyDown); document.removeEventListener("visibilitychange", onVisibility); };
+  }, [pausePractice, pluckString, preferences.shortcuts]);
 
   useEffect(() => {
     if (!metronome) return;
-    click();
-    const interval = window.setInterval(click, 60_000 / song.bpm);
+    void click();
+    const interval = window.setInterval(() => { void click(); }, 60_000 / song.bpm);
     return () => window.clearInterval(interval);
   }, [click, metronome, song.bpm]);
 
   useEffect(() => () => {
+    operationRef.current += 1;
+    runningRef.current = false;
     if (activeTimer.current) window.clearTimeout(activeTimer.current);
   }, []);
 
-  const startPractice = () => {
-    void unlock();
-    setStep(0);
-    setScore(0);
-    setMistakes(0);
-    setPracticing(true);
-    setFeedback("เริ่มได้ · วางนิ้วตามจุดสีน้ำเงินแล้วดีดสาย");
-  };
-
-  const accuracy = useMemo(() => score ? Math.round((score / (score + mistakes * 100)) * 100) : 0, [mistakes, score]);
-  const visibleNotes = song.notes.slice(Math.max(0, step - 2), Math.min(song.notes.length, step + 7));
-  const visibleStart = Math.max(0, step - 2);
-
   return (
-    <main className="min-h-[100svh] bg-[radial-gradient(circle_at_75%_0%,rgba(25,91,104,.18),transparent_35rem),#050b0e] text-white">
-      <div className="mx-auto max-w-[1500px] px-4 py-4 md:px-6">
-        <header className="flex items-center justify-between gap-4">
-          <AppBrand dark />
-          <div className="hidden rounded-full border border-white/10 bg-white/5 px-5 py-2 text-center backdrop-blur md:block"><span className="text-[10px] tracking-[.15em] text-white/35">{freePlay ? "FREE PLAY" : "กำลังฝึกเพลง"}</span><p className="text-sm font-medium">{song.title}</p></div>
-          <Link href="/songs" className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs text-white/65 transition hover:bg-white/10 hover:text-white"><ChevronLeftIcon className="size-4" />เลือกเพลง</Link>
-        </header>
-
-        <section className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_310px]">
-          <VirtualPinCamera frets={frets} activeString={activeString} expected={practicing ? expected : undefined} onSelectFret={selectFret} onPluck={pluckString} onUnlockAudio={unlockAudio} onFingeredFrets={setTrackedFrets} />
-
-          <aside className="flex flex-col gap-3">
-            <div className="glass rounded-[24px] p-5">
-              <div className="flex items-start justify-between gap-3"><div><p className="text-[10px] font-semibold tracking-[.18em] text-emerald-300/65">AI COACH</p><h1 className="mt-1 text-xl font-semibold">{freePlay ? "โหมดเล่นอิสระ" : song.title}</h1></div><span className="rounded-full bg-amber-300/10 px-3 py-1 text-[10px] text-amber-200">{song.bpm} BPM</span></div>
-              <div className={`mt-5 rounded-2xl border p-4 ${feedback.startsWith("ถูกต้อง") || feedback.startsWith("ยอดเยี่ยม") ? "border-emerald-300/20 bg-emerald-300/8" : feedback.startsWith("ลอง") ? "border-amber-300/20 bg-amber-300/8" : "border-white/8 bg-white/4"}`}>
-                <p className="text-xs leading-5 text-white/70">{feedback}</p>
-              </div>
-
-              {!freePlay && (
-                <div className="mt-4 grid grid-cols-[1fr_auto] items-center gap-3 rounded-2xl bg-black/25 p-4">
-                  <div><p className="text-[10px] text-white/35">โน้ตปัจจุบัน</p><p className="mt-1 font-mono text-lg text-emerald-300">{complete ? "COMPLETE" : expected ? `${expected.label} · สาย ${expected.string + 1} · เฟรต ${expected.fret}` : "READY"}</p></div>
-                  <span className={`grid size-11 place-items-center rounded-full border text-lg font-bold ${complete ? "border-emerald-300/30 bg-emerald-300/15 text-emerald-300" : "border-blue-300/25 bg-blue-300/10 text-blue-300"}`}>{complete ? "✓" : expected?.string !== undefined ? expected.string + 1 : "–"}</span>
+    <div className="practice-page">
+      <AppHeader studio />
+      <main id="main-content" tabIndex={-1} className="practice-main">
+        <div className="practice-heading">
+          <h1>{freePlay ? "เล่นพิณอิสระ" : song.title}</h1>
+          <span className="practice-badge">{freePlay ? "FREE PLAY · ไม่เก็บคะแนน" : "PRACTICE · แบบฝึกตัวอย่าง"}</span>
+        </div>
+        <div className="practice-layout">
+          <section aria-label="พื้นที่เล่นพิณ" className="practice-playing">
+            <div className="ui-panel current-note-panel order-1">
+              <div className="current-note-top">
+                <div>
+                  <p className="note-eyebrow">{freePlay ? "โน้ตที่เล่นล่าสุด" : complete ? "ฝึกสำเร็จ" : "โน้ตปัจจุบัน"}</p>
+                  <p className="current-note">{freePlay ? lastNote.split(" · ")[0] || "ลองดีดสาย" : complete ? "ครบทุกโน้ต ✓" : expected?.label}</p>
+                  {!freePlay && expected && <p className="note-details">สาย {expected.string + 1} · เฟรต {expected.fret} <span className="ml-2">{step}/{song.notes.length}</span></p>}
                 </div>
-              )}
-
-              <div className="mt-4 grid grid-cols-2 gap-2 text-center"><div className="rounded-xl bg-white/4 p-3"><p className="text-[9px] text-white/30">ความแม่นยำ</p><p className="mt-1 text-lg font-semibold text-emerald-300">{accuracy}%</p></div><div className="rounded-xl bg-white/4 p-3"><p className="text-[9px] text-white/30">คะแนน</p><p className="mt-1 text-lg font-semibold">{score}</p></div></div>
+                {!freePlay && !complete && <button ref={startRef} type="button" disabled={!ready || starting} onClick={practicing ? () => { pausePractice(); setFeedback("พักแล้ว · กดฝึกต่อเมื่อต้องการกลับมาเล่น"); } : () => { void startPractice(); }} className="ui-button ui-primary">{!practicing && <PlayIcon className="size-4" />}{starting ? "กำลังเปิดเสียง…" : practicing ? "พักการฝึก" : record && (step > 0 || mistakes > 0) ? "ฝึกต่อ" : "เริ่มฝึก"}</button>}
+              </div>
+              {!freePlay && <progress className="mt-3" value={step} max={song.notes.length} aria-label="ความคืบหน้าการฝึก" />}
             </div>
-
-            <div className="glass rounded-[24px] p-4">
-              {!freePlay && <button type="button" onClick={startPractice} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-400 px-4 py-3.5 text-sm font-semibold text-[#052113] shadow-lg shadow-emerald-900/20 transition hover:bg-emerald-300"><PlayIcon className="size-4" />{practicing ? "เริ่มฝึกใหม่" : "เริ่มฝึกเพลง"}</button>}
-              <button type="button" onClick={() => { void unlock(); setMetronome((value) => !value); }} className={`mt-2 flex w-full items-center justify-center gap-2 rounded-2xl border px-4 py-3 text-xs transition ${metronome ? "border-amber-300/30 bg-amber-300/10 text-amber-200" : "border-white/10 bg-white/4 text-white/55 hover:bg-white/8"}`}><ClockIcon className="size-4" />เมโทรนอม {metronome ? "เปิด" : "ปิด"}</button>
+            <div className={`ui-panel touch-panel ${cameraLive ? "order-3" : "order-2"}`}>
+              <TouchPinControls frets={frets} activeString={activeString} expected={practicing ? expected : undefined} onSelectFret={selectFret} onPluck={pluckString} />
+              <p role="status" aria-atomic="true" className="mt-3 min-h-12 text-sm leading-6 text-slate-700">{feedback || (freePlay ? "เลือกเฟรตแล้วดีดได้เลย ไม่ต้องใช้กล้อง" : complete ? "ฝึกครบแล้ว · ดูสรุปผลหรือเริ่มรอบใหม่ได้ด้านล่าง" : step > 0 || mistakes > 0 ? "พบผลฝึกเดิม · กดฝึกต่อเพื่อเล่นจากโน้ตที่ค้างไว้" : "ลองเสียงได้ทันที หรือกดเริ่มฝึกเพื่อเก็บคะแนน")}</p>
+              {freePlay && lastNote && <p className="text-sm font-medium text-blue-800">{lastNote}</p>}
             </div>
-
-            <div className="glass mt-auto rounded-[24px] p-4 text-xs leading-5 text-white/40"><p className="mb-2 flex items-center gap-2 font-medium text-white/70"><VolumeIcon className="size-4 text-emerald-300" />วิธีเล่นด้วยมือ</p><ol className="list-inside list-decimal space-y-1"><li>เปิดกล้องและยกมือทั้งสอง</li><li>มือซ้ายแตะตำแหน่งเฟรต</li><li>มือขวาจีบนิ้วแล้วผ่านสาย</li></ol></div>
-          </aside>
-        </section>
-
-        {!freePlay && (
-          <section className="glass mt-4 overflow-hidden rounded-[24px] p-4">
-            <div className="flex items-center justify-between"><div><p className="text-[10px] tracking-[.14em] text-white/35">NOTE TIMELINE</p><p className="mt-1 text-xs text-white/65">{step}/{song.notes.length} โน้ต</p></div><div className="h-1.5 w-32 overflow-hidden rounded-full bg-white/8"><div className="h-full rounded-full bg-emerald-400 transition-all" style={{ width: `${Math.min(100, (step / song.notes.length) * 100)}%` }} /></div></div>
-            <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
-              {visibleNotes.map((note, index) => {
-                const absoluteIndex = visibleStart + index;
-                const isCurrent = absoluteIndex === step;
-                const isPast = absoluteIndex < step;
-                return <div key={`${absoluteIndex}-${note.label}`} className={`min-w-20 rounded-xl border px-3 py-2 text-center transition ${isCurrent ? "border-blue-300/35 bg-blue-400/15 text-blue-200 shadow-[0_0_20px_rgba(96,165,250,.12)]" : isPast ? "border-emerald-300/15 bg-emerald-300/8 text-emerald-300/55" : "border-white/8 bg-white/3 text-white/40"}`}><p className="font-mono text-sm font-semibold">{note.label}</p><p className="mt-1 text-[9px]">สาย {note.string + 1} · {note.fret}</p></div>;
-              })}
-            </div>
+            <VirtualPinCamera frets={frets} activeString={activeString} expected={practicing ? expected : undefined} onSelectFret={selectFret} onPluck={pluckString} onUnlockAudio={() => { void unlock(); }} defaultFacing={preferences.facing} onLiveChange={setCameraLive} className={cameraLive ? "order-2" : "order-3"} />
           </section>
-        )}
-      </div>
-    </main>
+          <aside aria-label="ผลการฝึกและเครื่องมือ" className="practice-sidebar">
+            {!freePlay && <section className="ui-panel">
+              <h2 ref={resultRef} tabIndex={-1} className="text-lg font-semibold">{complete ? "สรุปการฝึก" : "ผลการฝึกรอบนี้"}</h2>
+              <dl className="practice-stats">
+                <div><dt>สายและเฟรตถูกต้อง</dt><dd>{accuracy === null ? "—" : `${accuracy}%`}</dd></div>
+                <div><dt>คะแนน</dt><dd>{step * 100}</dd></div>
+              </dl>
+              <p className="mt-3 text-xs leading-5 text-slate-600">{complete ? `เล่นครบ ${song.notes.length} โน้ต · ลองผิด ${mistakes} ครั้ง` : "ให้คะแนนจากสายและเฟรต ยังไม่ประเมินจังหวะ"}</p>
+              <p role="status" className={`mt-2 text-xs leading-5 ${storageTemporary ? "text-red-800" : "text-slate-600"}`}>{!ready ? "กำลังอ่านผลฝึก…" : storageTemporary ? "บันทึกถาวรไม่ได้ ผลจะหายเมื่อปิดหรือโหลดหน้าใหม่" : "บันทึกในเบราว์เซอร์นี้ · ไม่ซิงก์ข้ามเครื่อง"}</p>
+              {complete && <Link href="/songs" className="ui-button ui-primary mt-4 w-full">เลือกแบบฝึกถัดไป</Link>}
+              {(record || complete) && <button ref={restartRef} type="button" className="ui-button mt-3 w-full" onClick={() => { pausePractice(); setRestartPending(true); }}>เริ่มรอบใหม่</button>}
+              {restartPending && <div role="group" aria-label="ยืนยันเริ่มรอบใหม่" className="mt-3 rounded-xl border border-amber-300 bg-amber-50 p-3" onKeyDown={event => { if (event.key === "Escape") { setRestartPending(false); restartRef.current?.focus(); } }}>
+                <p className="text-sm text-amber-950">ล้างคะแนนรอบนี้และเริ่มจากโน้ตแรก?</p>
+                <div className="mt-3 flex flex-wrap gap-2"><button ref={cancelRef} type="button" className="ui-button" onClick={() => { setRestartPending(false); restartRef.current?.focus(); }}>เก็บผลเดิม</button><button type="button" className="ui-button ui-primary" onClick={resetPractice}>ยืนยันเริ่มใหม่</button></div>
+              </div>}
+            </section>}
+            <section className="ui-panel">
+              <h2 className="text-lg font-semibold">เสียงและจังหวะ</h2>
+              <div className="mt-3 grid gap-2">
+                <button type="button" onClick={() => { void testAudio(); }} className="ui-button"><VolumeIcon className="size-4" />{audioStatus === "ready" ? "ทดสอบเสียง · พร้อม" : "เปิดและทดสอบเสียง"}</button>
+                <button type="button" aria-pressed={metronome} onClick={async () => { if (metronome) { setMetronome(false); return; } const operation = operationRef.current; if (await unlock() && operation === operationRef.current) setMetronome(true); }} className="ui-button"><ClockIcon className="size-4" />เมโทรนอม {metronome ? "เปิด" : "ปิด"} · {song.bpm} BPM</button>
+                {audioError && <p role="alert" className="text-sm text-red-800">{audioError}</p>}
+                <Link href="/settings" className="ui-button">ตั้งค่าเสียงและกล้อง</Link>
+              </div>
+            </section>
+            {!freePlay && !complete && <section className="ui-panel"><h2 className="text-lg font-semibold">โน้ตถัดไป</h2><ol className="next-notes">{song.notes.slice(step + 1, step + 4).map((note, index) => <li key={index} className="min-w-0"><p className="text-lg font-semibold">{note.label}</p><p className="text-xs text-slate-600">สาย {note.string + 1}<br />เฟรต {note.fret}</p></li>)}</ol>{step === song.notes.length - 1 && <p className="mt-2 text-sm text-slate-600">เหลือโน้ตสุดท้ายแล้ว</p>}</section>}
+            <details className="ui-panel text-sm leading-6 text-slate-700">
+              <summary className="min-h-11 cursor-pointer font-semibold text-[#102544]">วิธีเล่นและข้อมูลแบบฝึก</summary>
+              <ol className="mt-3 list-decimal space-y-2 pl-5"><li>เลือกเฟรต 0–6 ของสายที่ต้องการ แล้วกด “ดีด”</li><li>โหมดเพลง: กดเริ่ม แล้วเล่นตามสายและเฟรตในกล่องโน้ตปัจจุบัน</li><li>เปิดกล้องเมื่อต้องการใช้มือจริง หรือใช้ปุ่มหน้าจอต่อได้เสมอ</li></ol>
+              <p className="mt-3">{preferences.shortcuts ? "ปุ่มลัดเปิดอยู่: 1 / 2 / 3 สำหรับดีดแต่ละสาย" : "เปิดปุ่มลัด 1 / 2 / 3 ได้ที่หน้าตั้งค่า"}</p>
+              {!freePlay && <p className="mt-3 rounded-xl bg-amber-50 p-3 text-amber-950">แบบฝึกนี้ใช้ทดสอบระบบ ยังไม่ใช่ทำนองต้นฉบับที่ตรวจสอบแล้ว ใช้การตั้งสาย E4 / A3 / E3</p>}
+            </details>
+          </aside>
+        </div>
+      </main>
+    </div>
   );
 }
