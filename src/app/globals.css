@@ -94,6 +94,9 @@ progress::-moz-progress-bar { background: var(--action); border-radius: 999px; }
 .hero-description { margin-top: 26px; color: #65656b; font-size: 19px; line-height: 1.8; }
 .hero-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 20px; margin-top: 30px; }
 .hero-actions .ui-button { min-height: 52px; padding-inline: 30px; font-size: 15px; }
+.hero-actions .home-studio-button { border-color: rgba(255,255,255,.16); background: linear-gradient(145deg, #30343a, #17191c); color: white; box-shadow: 7px 7px 16px rgba(93,101,111,.3), -5px -5px 14px rgba(255,255,255,.95), inset 0 1px 1px rgba(255,255,255,.18); }
+.hero-actions .home-studio-button:hover { background: linear-gradient(145deg, #3a3f46, #202328); color: white; }
+.hero-actions .home-studio-button:active { box-shadow: inset 4px 4px 10px rgba(0,0,0,.38), inset -3px -3px 8px rgba(255,255,255,.06); }
 .hero-actions .text-link { min-height: 52px; padding-inline: 24px; border: 1px solid rgba(255,255,255,.75); border-radius: 999px; background: var(--surface-high); box-shadow: var(--soft-shadow-sm); transition: transform .2s, box-shadow .2s; }
 .hero-actions .text-link:hover { transform: translateY(-1px); text-decoration: none; }
 .hero-actions .text-link:active { transform: translateY(1px); box-shadow: var(--soft-inset); }

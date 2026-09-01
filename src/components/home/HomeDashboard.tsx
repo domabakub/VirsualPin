@@ -29,7 +29,11 @@ export function HomeDashboard() {
           <p className="eyebrow">A NEW WAY TO PLAY</p>
           <h1>เสียงคุ้นเคย.<br /><span>วิธีเล่นใหม่.</span></h1>
           <p className="hero-description">สัมผัสเสียงพิณไทยผ่านปลายนิ้ว<br className="hidden sm:block" /> ลองเล่น เรียนรู้ และสร้างจังหวะในแบบคุณ</p>
-          <div className="hero-actions"><Link href={resume ? `/play/${resume.slug}` : "/play/free-play"} className="ui-button ui-primary">{resume ? `ฝึกต่อ · ${resume.title}` : "ลองเล่นพิณ"}</Link><Link href="/songs?category=learn" className="text-link">เริ่มจากพื้นฐาน <span aria-hidden="true">›</span></Link></div>
+          <div className="hero-actions">
+            <Link href={resume ? `/play/${resume.slug}` : "/play/free-play"} className="ui-button ui-primary">{resume ? `ฝึกต่อ · ${resume.title}` : "ลองเล่นพิณ"}</Link>
+            <Link href="/studio" className="ui-button home-studio-button"><MusicIcon aria-hidden="true" className="size-4" />เปิด Studio Mode</Link>
+            <Link href="/songs?category=learn" className="text-link">เริ่มจากพื้นฐาน <span aria-hidden="true">›</span></Link>
+          </div>
           <p className="hero-footnote">เล่นได้ทันทีบนเบราว์เซอร์ · ไม่ต้องสมัครสมาชิก</p>
         </div>
         <PinHeroArt />
