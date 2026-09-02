@@ -1,8 +1,8 @@
-import { getPinNoteName } from "@/lib/audio/pinTuning";
+import { getPhinNoteName } from "@/lib/audio/phinTuning";
 
 export type StringIndex = 0 | 1 | 2;
 
-export type PinNote = {
+export type PhinNote = {
   string: StringIndex;
   fret: number;
   label: string;
@@ -18,10 +18,10 @@ export type Song = {
   duration: string;
   bpm: number;
   accent: string;
-  notes: PinNote[];
+  notes: PhinNote[];
 };
 
-const laoDuangDuen: Omit<PinNote, "label">[] = [
+const laoDuangDuen: Omit<PhinNote, "label">[] = [
   { string: 0, fret: 0, beat: 1 },
   { string: 1, fret: 0, beat: 1 },
   { string: 2, fret: 0, beat: 2 },
@@ -36,7 +36,7 @@ const laoDuangDuen: Omit<PinNote, "label">[] = [
   { string: 0, fret: 0, beat: 2 },
 ];
 
-function transpose(notes: Omit<PinNote, "label">[], shift: number): Omit<PinNote, "label">[] {
+function transpose(notes: Omit<PhinNote, "label">[], shift: number): Omit<PhinNote, "label">[] {
   return notes.map((note, index) => ({
     ...note,
     string: ((note.string + (index % 3 === 0 ? 1 : 0)) % 3) as StringIndex,
@@ -44,7 +44,7 @@ function transpose(notes: Omit<PinNote, "label">[], shift: number): Omit<PinNote
   }));
 }
 
-const songExamples: (Omit<Song, "notes"> & { notes: Omit<PinNote, "label">[] })[] = [
+const songExamples: (Omit<Song, "notes"> & { notes: Omit<PhinNote, "label">[] })[] = [
   {
     slug: "lao-duang-duen",
     title: "ลาวดวงเดือน",
@@ -115,7 +115,7 @@ const songExamples: (Omit<Song, "notes"> & { notes: Omit<PinNote, "label">[] })[
 
 export const songs: Song[] = songExamples.map(song => ({
   ...song,
-  notes: song.notes.map(note => ({ ...note, label: getPinNoteName(note.string, note.fret) })),
+  notes: song.notes.map(note => ({ ...note, label: getPhinNoteName(note.string, note.fret) })),
 }));
 
 export function getSong(slug: string) {

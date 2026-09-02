@@ -1,5 +1,5 @@
 import type { TrackedHand } from "./types";
-import { RIGHT_PINCH } from "./virtualPinInteraction";
+import { RIGHT_PINCH } from "./virtualPhinInteraction";
 
 export type HandDrawingMode = "skeleton" | "instrument";
 

@@ -1,10 +1,16 @@
 import type { StringIndex } from "@/data/songs";
+import { isTouchScaleId, type TouchScaleId } from "@/lib/studio/touchPhin";
 
 export const STUDIO_BARS = 8;
 export const BEATS_PER_BAR = 4;
 export const STUDIO_BEATS = STUDIO_BARS * BEATS_PER_BAR;
 
 export type QuantizeDivision = "off" | "1/8" | "1/16";
+
+export type StudioBendPoint = {
+  offsetBeats: number;
+  cents: number;
+};
 
 export type StudioNote = {
   id: string;
@@ -13,6 +19,7 @@ export type StudioNote = {
   string: StringIndex;
   fret: number;
   velocity: number;
+  bendPoints?: StudioBendPoint[];
 };
 
 export type StudioProject = {
@@ -25,17 +32,21 @@ export type StudioProject = {
   notes: StudioNote[];
   quantize: QuantizeDivision;
   drumEnabled: boolean;
-  pinMuted: boolean;
+  phinMuted: boolean;
   drumMuted: boolean;
-  pinVolume: number;
+  phinVolume: number;
   drumVolume: number;
+  touchKeyRoot: number;
+  touchScale: TouchScaleId;
+  touchScaleLock: boolean;
+  touchBendRange: 1 | 2;
   updatedAt: number;
 };
 
 export function createStudioProject(): StudioProject {
   return {
     version: 1,
-    id: "virtual-pin-demo",
+    id: "virtual-phin-demo",
     name: "ลายพิณแรกของฉัน",
     bpm: 96,
     bars: STUDIO_BARS,
@@ -43,10 +54,14 @@ export function createStudioProject(): StudioProject {
     notes: [],
     quantize: "off",
     drumEnabled: false,
-    pinMuted: false,
+    phinMuted: false,
     drumMuted: false,
-    pinVolume: 0.82,
+    phinVolume: 0.82,
     drumVolume: 0.62,
+    touchKeyRoot: 4,
+    touchScale: "major-pentatonic",
+    touchScaleLock: false,
+    touchBendRange: 2,
     updatedAt: Date.now(),
   };
 }
@@ -106,14 +121,25 @@ export function readStudioProject(raw: string | null): StudioProject | null {
           string: Math.max(0, Math.min(2, note.string)) as StringIndex,
           fret: Math.max(0, Math.min(6, Math.round(note.fret))),
           velocity: Math.max(1, Math.min(127, Math.round(Number(note.velocity) || 96))),
+          bendPoints: Array.isArray(note.bendPoints) ? note.bendPoints
+            .filter(point => point && typeof point.offsetBeats === "number" && typeof point.cents === "number")
+            .map(point => ({
+              offsetBeats: Math.max(0, Math.min(4, point.offsetBeats)),
+              cents: Math.max(-1_200, Math.min(1_200, Math.round(point.cents))),
+            }))
+            .sort((a, b) => a.offsetBeats - b.offsetBeats)
+            .slice(0, 160) : [],
         }))
         .sort((a, b) => a.beat - b.beat),
       quantize: value.quantize === "1/8" || value.quantize === "1/16" ? value.quantize : "off",
-      pinVolume: typeof value.pinVolume === "number" ? Math.max(0, Math.min(1, value.pinVolume)) : base.pinVolume,
+      phinVolume: typeof value.phinVolume === "number" ? Math.max(0, Math.min(1, value.phinVolume)) : base.phinVolume,
       drumVolume: typeof value.drumVolume === "number" ? Math.max(0, Math.min(1, value.drumVolume)) : base.drumVolume,
+      touchKeyRoot: typeof value.touchKeyRoot === "number" ? Math.max(0, Math.min(11, Math.round(value.touchKeyRoot))) : base.touchKeyRoot,
+      touchScale: isTouchScaleId(value.touchScale) ? value.touchScale : base.touchScale,
+      touchScaleLock: typeof value.touchScaleLock === "boolean" ? value.touchScaleLock : base.touchScaleLock,
+      touchBendRange: value.touchBendRange === 1 ? 1 : 2,
     };
   } catch {
     return null;
   }
 }
-

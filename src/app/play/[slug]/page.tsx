@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { VirtualPinStudio } from "@/components/play/VirtualPinStudio";
+import { VirtualPhinStudio } from "@/components/play/VirtualPhinStudio";
 import { getSong, songs, type Song } from "@/data/songs";
 
 const freePlaySong: Song = {
@@ -20,7 +20,7 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  return { title: `${slug === "free-play" ? "เล่นพิณอิสระ" : getSong(slug)?.title ?? "ไม่พบแบบฝึก"} | Virtual Pin` };
+  return { title: `${slug === "free-play" ? "เล่นพิณอิสระ" : getSong(slug)?.title ?? "ไม่พบแบบฝึก"} | Virtual Phin` };
 }
 
 export default async function PlayPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -28,5 +28,5 @@ export default async function PlayPage({ params }: { params: Promise<{ slug: str
   const freePlay = slug === "free-play";
   const song = freePlay ? freePlaySong : getSong(slug);
   if (!song) notFound();
-  return <VirtualPinStudio key={song.slug} song={song} freePlay={freePlay} />;
+  return <VirtualPhinStudio key={song.slug} song={song} freePlay={freePlay} />;
 }

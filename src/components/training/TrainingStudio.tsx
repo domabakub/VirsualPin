@@ -1,4 +1,4 @@
-import { PinLogo } from "@/components/icons";
+import { PhinLogo } from "@/components/icons";
 import { CameraStage } from "./CameraStage";
 
 export function TrainingStudio() {
@@ -6,9 +6,9 @@ export function TrainingStudio() {
     <main className="mx-auto flex min-h-[100svh] w-full max-w-[1500px] flex-col px-5 py-4 max-sm:px-3 max-sm:py-3">
       <header className="mb-4 flex items-center justify-between gap-4 px-1">
         <div className="flex items-center gap-3">
-          <span className="grid size-11 place-items-center rounded-2xl border border-amber-300/20 bg-amber-300/8 text-amber-300"><PinLogo className="h-8 w-6" /></span>
+          <span className="grid size-11 place-items-center rounded-2xl border border-amber-300/20 bg-amber-300/8 text-amber-300"><PhinLogo className="h-8 w-6" /></span>
           <div>
-            <h1 className="text-lg font-semibold leading-tight tracking-[.04em]">VIRTUAL PIN</h1>
+            <h1 className="text-lg font-semibold leading-tight tracking-[.04em]">VIRTUAL PHIN</h1>
             <p className="mt-0.5 text-[11px] text-white/40">AI THAI MUSIC ACADEMY</p>
           </div>
         </div>

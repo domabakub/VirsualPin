@@ -1,4 +1,4 @@
-# Virtual Pin — การแก้ UX/UI หลัง audit
+# Virtual Phin — การแก้ UX/UI หลัง audit
 
 แก้ใน local working tree วันที่ 31 สิงหาคม 2026 ไม่มีการ deploy หรือ commit และรักษางานเดิมด้าน hand tracking กับเสียง Safari ไว้
 

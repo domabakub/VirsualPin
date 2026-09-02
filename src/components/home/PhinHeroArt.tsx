@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { CubeIcon } from "@/components/icons";
 
-export function PinHeroArt() {
+export function PhinHeroArt() {
   const [viewerOpen, setViewerOpen] = useState(false);
   return <figure className="hero-photograph">
     <div className="hero-model-frame">

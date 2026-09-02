@@ -1,4 +1,4 @@
-# Virtual Pin — Visual refresh
+# Virtual Phin — Visual refresh
 
 ปรับตามคำขอให้เรียบในแนว Apple และใช้ภาพถ่ายจริง โดยคงระบบฝึกและการบันทึกผลเดิมไว้
 

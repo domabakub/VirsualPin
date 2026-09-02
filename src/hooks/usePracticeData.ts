@@ -3,8 +3,8 @@
 import { useMemo, useSyncExternalStore } from "react";
 import { parsePracticeData, type PracticeData, type PracticeRecord, type Preferences } from "@/lib/practice";
 
-const KEY = "virtual-pin.practice.v1";
-const EVENT = "virtual-pin:practice-change";
+const KEY = "virtual-phin.practice.v1";
+const EVENT = "virtual-phin:practice-change";
 let memory: string | null = null;
 let temporary = false;
 

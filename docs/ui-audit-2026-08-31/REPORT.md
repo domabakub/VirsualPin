@@ -1,4 +1,4 @@
-# Virtual Pin — UX/UI audit
+# Virtual Phin — UX/UI audit
 
 วันที่ 31 สิงหาคม 2026 · ตรวจ local working tree ใน S:/Hackaton
 
@@ -48,7 +48,7 @@ P2 = แก้ในรอบปรับ UX/UI ถัดไป; ความเ
 
 **หลักฐาน:** เพลงลาวดวงเดือนแสดง D ที่สาย 1 เฟรต 0 แต่ปุ่มดีดระบุ E4 และค่า base frequency ของสายเดียวกันคือ 329.63 Hz โค้ดตรวจถูก/ผิดจากสายและเฟรต ไม่ตรวจ label ทดลองกดแล้วได้ 100 คะแนนและเลื่อนไปโน้ตที่สอง แม้ข้อมูล pitch กับ label ขัดกัน นอกจากนี้ `transpose()` เปลี่ยนสาย/เฟรตแต่ไม่คำนวณ label ใหม่
 
-อ้างอิง [songs.ts](S:/Hackaton/src/data/songs.ts:24), [usePinAudio.ts](S:/Hackaton/src/hooks/usePinAudio.ts:9), [VirtualPinStudio.tsx](S:/Hackaton/src/components/play/VirtualPinStudio.tsx:54)
+อ้างอิง [songs.ts](S:/Hackaton/src/data/songs.ts:24), [usePhinAudio.ts](S:/Hackaton/src/hooks/usePhinAudio.ts:9), [VirtualPhinStudio.tsx](S:/Hackaton/src/components/play/VirtualPhinStudio.tsx:54)
 
 **ผลกระทบ:** ผู้เรียนเห็นชื่อโน้ตหนึ่งแต่ได้ยินอีกชื่อหนึ่ง การให้คะแนนยืนยันความเข้าใจผิดนี้ ข้อสรุปเรื่อง pitch มาจากโค้ด ไม่ใช่การวัดสัญญาณเสียงจากลำโพง
 
@@ -60,7 +60,7 @@ P2 = แก้ในรอบปรับ UX/UI ถัดไป; ความเ
 
 **หลักฐาน:** ที่ 320×568 พื้นที่ document มี client width 305px เนื่องจาก scrollbar แต่ scroll width เป็น 354px; aside กว้าง 338px และยื่นถึง x=354 ปุ่มด้านขวาและตัวพิณถูกตัด ที่ 390×844 ปุ่มเริ่มฝึกอยู่ประมาณ y=1014 และที่ 768×1024 อยู่ประมาณ y=1049 ก่อนเริ่มเพลง ต้องเลื่อนหา ส่วนโน้ตและปุ่มควบคุมอยู่คนละช่วงกับพื้นที่พิณ
 
-อ้างอิง [VirtualPinStudio.tsx](S:/Hackaton/src/components/play/VirtualPinStudio.tsx:114), [VirtualPinCamera.tsx](S:/Hackaton/src/components/play/VirtualPinCamera.tsx:326)
+อ้างอิง [VirtualPhinStudio.tsx](S:/Hackaton/src/components/play/VirtualPhinStudio.tsx:114), [VirtualPhinCamera.tsx](S:/Hackaton/src/components/play/VirtualPhinCamera.tsx:326)
 
 **แก้:** ให้ grid items ย่อได้ด้วย `min-w-0` ตรวจ min-content ของแถวโน้ต 6 ตัว จัดโน้ตปัจจุบันและปุ่มเริ่ม/พักให้อยู่ใกล้พิณ ลดความสูงพื้นที่ว่างบนมือถือ และพับคำแนะนำรายละเอียด แสดงโน้ตถัดไปเท่าที่พื้นที่พอ ไม่ซ่อน horizontal overflow ที่ root เพื่อกลบปัญหา
 
@@ -74,7 +74,7 @@ P2 = แก้ในรอบปรับ UX/UI ถัดไป; ความเ
 
 **หลักฐาน:** หน้าแรกแสดง 7 วันต่อเนื่องและ 72% แบบ hardcoded คลังเพลงเริ่มที่ 42%, 18% ฯลฯ จาก fixture ทดลองฝึกได้ 1/12, 100 คะแนน แล้ว reload กลับเป็น 0/12 และ 0 คะแนน ไม่มีข้อความบอกว่าผลยังไม่บันทึก
 
-อ้างอิง [HomeDashboard.tsx](S:/Hackaton/src/components/home/HomeDashboard.tsx:26), [songs.ts](S:/Hackaton/src/data/songs.ts:55), [VirtualPinStudio.tsx](S:/Hackaton/src/components/play/VirtualPinStudio.tsx:16)
+อ้างอิง [HomeDashboard.tsx](S:/Hackaton/src/components/home/HomeDashboard.tsx:26), [songs.ts](S:/Hackaton/src/data/songs.ts:55), [VirtualPhinStudio.tsx](S:/Hackaton/src/components/play/VirtualPhinStudio.tsx:16)
 
 **แก้:** ช่วงต้นแบบติดป้าย “ข้อมูลตัวอย่าง” หรือซ่อนตัวเลข เมื่อรองรับการบันทึก ให้ session, library และ dashboard ใช้ข้อมูลชุดเดียวกัน มีสถานะยังไม่เริ่ม/กำลังฝึก/สำเร็จ และแยก “ฝึกต่อ” ออกจาก “เริ่มใหม่”
 
@@ -111,7 +111,7 @@ P2 = แก้ในรอบปรับ UX/UI ถัดไป; ความเ
 
 ข้อมูลเหล่านี้เป็นข้อความใช้งาน ไม่ใช่ของตกแต่ง และต่ำกว่า 4.5:1 สำหรับข้อความทั่วไป [W3C: Contrast Minimum](https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html)
 
-อ้างอิง [VirtualPinStudio.tsx](S:/Hackaton/src/components/play/VirtualPinStudio.tsx:125)
+อ้างอิง [VirtualPhinStudio.tsx](S:/Hackaton/src/components/play/VirtualPhinStudio.tsx:125)
 
 **แก้:** ใช้ token สีข้อความรองที่เข้มขึ้น ลดจำนวนขนาดตัวอักษร เลิกใช้ 8–10px กับข้อมูลที่ต้องอ่านขณะเล่น ขนาด body 16px และ supporting text 14px เป็นเป้าหมายการออกแบบที่แนะนำ ไม่ใช่ขั้นต่ำที่ WCAG กำหนด
 
@@ -121,7 +121,7 @@ P2 = แก้ในรอบปรับ UX/UI ถัดไป; ความเ
 
 **หลักฐาน:** ปุ่มเฟรตมีชื่อ แต่ไม่เปิดเผย selected/pressed state ตัวกรองใช้สีอย่างเดียวบอกการเลือก feedback “ถูกต้อง” กับคะแนนเปลี่ยนเป็น div/p ปกติ ไม่มี live region ของแอปในหน้าฝึก แถบความคืบหน้าเป็น div ตกแต่ง
 
-อ้างอิง [VirtualPinInstrument.tsx](S:/Hackaton/src/components/play/VirtualPinInstrument.tsx:44), [SongLibrary.tsx](S:/Hackaton/src/components/songs/SongLibrary.tsx:68), [VirtualPinStudio.tsx](S:/Hackaton/src/components/play/VirtualPinStudio.tsx:152)
+อ้างอิง [VirtualPhinInstrument.tsx](S:/Hackaton/src/components/play/VirtualPhinInstrument.tsx:44), [SongLibrary.tsx](S:/Hackaton/src/components/songs/SongLibrary.tsx:68), [VirtualPhinStudio.tsx](S:/Hackaton/src/components/play/VirtualPhinStudio.tsx:152)
 
 **แก้:** ใช้ semantics ที่ตรงกับพฤติกรรม เช่น `aria-pressed` สำหรับตัวกรองแบบปุ่ม หรือ radio group สำหรับเลือกเฟรตต่อสาย มีข้อความสาย/เฟรตที่เลือก และ status region สำหรับผลที่สำคัญ อย่าประกาศค่า tracking ทุกเฟรมหรือทุกตัวเลขจนรบกวน
 
@@ -139,9 +139,9 @@ P2 = แก้ในรอบปรับ UX/UI ถัดไป; ความเ
 
 ### A09 — ขั้นตอนเริ่มต้นยาว และไม่บอกสถานะรอของกล้อง
 
-**หลักฐานจากโค้ด:** hook มี phase `requesting` และ tracker มี `loading` แต่ VirtualPinCamera แสดงปุ่มตาม `isLive` อย่างเดียว ไม่ disable ระหว่างขอสิทธิ์ และไม่แสดงขั้นตอนโหลด tracker ส่วนคู่มือมือซ้าย/ขวาเจ็ดข้ออยู่ท้ายแผง ยังไม่มีแบบฝึกท่าทางทีละขั้น ข้อความหลายจุดแนะนำมือแม้กำลังใช้ปุ่มหน้าจอ
+**หลักฐานจากโค้ด:** hook มี phase `requesting` และ tracker มี `loading` แต่ VirtualPhinCamera แสดงปุ่มตาม `isLive` อย่างเดียว ไม่ disable ระหว่างขอสิทธิ์ และไม่แสดงขั้นตอนโหลด tracker ส่วนคู่มือมือซ้าย/ขวาเจ็ดข้ออยู่ท้ายแผง ยังไม่มีแบบฝึกท่าทางทีละขั้น ข้อความหลายจุดแนะนำมือแม้กำลังใช้ปุ่มหน้าจอ
 
-อ้างอิง [VirtualPinCamera.tsx](S:/Hackaton/src/components/play/VirtualPinCamera.tsx:333), [VirtualPinStudio.tsx](S:/Hackaton/src/components/play/VirtualPinStudio.tsx:166)
+อ้างอิง [VirtualPhinCamera.tsx](S:/Hackaton/src/components/play/VirtualPhinCamera.tsx:333), [VirtualPhinStudio.tsx](S:/Hackaton/src/components/play/VirtualPhinStudio.tsx:166)
 
 **แก้:** ให้เลือก “แตะหน้าจอ” หรือ “ใช้กล้อง” แล้วแสดงคำแนะนำตามโหมด จัด 3 ขั้น: ทดสอบเสียง → ลองเลือกเฟรต/ดีดหนึ่งโน้ต → เริ่มเพลง สำหรับกล้องบอกกำลังขอสิทธิ์/กำลังโหลด/พร้อม/ไม่พบมือ/ผิดพลาด และมีวิธีเปลี่ยนไปใช้ปุ่มเสมอ
 
@@ -151,7 +151,7 @@ P2 = แก้ในรอบปรับ UX/UI ถัดไป; ความเ
 
 **หลักฐาน:** โหมดอิสระแสดงความแม่นยำ 0% และคะแนน 0 แม้กดเล่นแล้ว เพราะไม่ให้คะแนน แต่ยังใช้ข้อความ “หรือกดเริ่มฝึก” โดยไม่มีปุ่มเริ่มฝึก ส่วนโหมดเพลงมีเริ่มใหม่ที่รีเซ็ตทันที ไม่มีพัก/ฝึกต่อ ในโค้ด completion มีคำว่า “จบ” และ feedback แต่ไม่มี flow สรุปผลกับขั้นตอนถัดไปที่แยกชัด
 
-อ้างอิง [VirtualPinStudio.tsx](S:/Hackaton/src/components/play/VirtualPinStudio.tsx:21), [VirtualPinStudio.tsx](S:/Hackaton/src/components/play/VirtualPinStudio.tsx:90)
+อ้างอิง [VirtualPhinStudio.tsx](S:/Hackaton/src/components/play/VirtualPhinStudio.tsx:21), [VirtualPhinStudio.tsx](S:/Hackaton/src/components/play/VirtualPhinStudio.tsx:90)
 
 **แก้:** โหมดอิสระแสดงโน้ต/สาย/เฟรตที่กำลังเล่นแทนคะแนนที่ใช้ไม่ได้ โหมดเพลงมีพัก/ต่อ เริ่มใหม่ที่ป้องกันการล้างผลโดยพลาด และผลสรุปเมื่อเล่นจบ ระบุว่า “ความแม่นยำของสาย/เฟรต” เพราะ scoring ปัจจุบันยังไม่วัดจังหวะตาม beat
 

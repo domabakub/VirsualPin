@@ -1,5 +1,5 @@
-import { getPinFrequency, getPinMidi } from "@/lib/audio/pinTuning";
-import { BEATS_PER_BAR, STUDIO_BEATS, type StudioProject } from "@/lib/studio/types";
+import { getPhinFrequency, getPhinMidi } from "@/lib/audio/phinTuning";
+import { BEATS_PER_BAR, STUDIO_BEATS, type StudioBendPoint, type StudioProject } from "@/lib/studio/types";
 
 const MIDI_TICKS_PER_BEAT = 480;
 
@@ -65,15 +65,29 @@ export function createStudioMidi(project: StudioProject) {
     0, 0xff, 0x2f, 0,
   ];
 
-  const pinEvents: MidiEvent[] = [];
+  const phinEvents: MidiEvent[] = [];
+  for (let channel = 0; channel < 3; channel += 1) {
+    phinEvents.push({ tick: 0, priority: -10, bytes: [0xb0 | channel, 101, 0] });
+    phinEvents.push({ tick: 0, priority: -9, bytes: [0xb0 | channel, 100, 0] });
+    phinEvents.push({ tick: 0, priority: -8, bytes: [0xb0 | channel, 6, 12] });
+    phinEvents.push({ tick: 0, priority: -7, bytes: [0xb0 | channel, 38, 0] });
+  }
   project.notes.forEach(note => {
     const start = Math.max(0, Math.round(note.beat * MIDI_TICKS_PER_BEAT));
     const end = Math.max(start + 30, Math.round((note.beat + note.durationBeats) * MIDI_TICKS_PER_BEAT));
-    const midi = getPinMidi(note.string, note.fret);
-    pinEvents.push({ tick: start, priority: 1, bytes: [0x90, midi, note.velocity] });
-    pinEvents.push({ tick: end, priority: 0, bytes: [0x80, midi, 0] });
+    const midi = getPhinMidi(note.string, note.fret);
+    const channel = note.string;
+    phinEvents.push({ tick: start, priority: 0, bytes: [0xe0 | channel, 0, 64] });
+    phinEvents.push({ tick: start, priority: 1, bytes: [0x90 | channel, midi, note.velocity] });
+    note.bendPoints?.forEach(point => {
+      const tick = Math.max(start, Math.min(end - 1, Math.round((note.beat + point.offsetBeats) * MIDI_TICKS_PER_BEAT)));
+      const value = Math.max(0, Math.min(16_383, Math.round(8_192 + point.cents / 1_200 * 8_192)));
+      phinEvents.push({ tick, priority: 2, bytes: [0xe0 | channel, value & 0x7f, (value >> 7) & 0x7f] });
+    });
+    phinEvents.push({ tick: end, priority: 0, bytes: [0x80 | channel, midi, 0] });
+    phinEvents.push({ tick: end, priority: 1, bytes: [0xe0 | channel, 0, 64] });
   });
-  const pinTrack = [...metaText(0x03, "Virtual Pin"), ...encodeTimedEvents(pinEvents)];
+  const phinTrack = [...metaText(0x03, "Virtual Phin"), ...encodeTimedEvents(phinEvents)];
 
   const drumEvents: MidiEvent[] = [];
   if (project.drumEnabled) {
@@ -89,7 +103,7 @@ export function createStudioMidi(project: StudioProject) {
   }
   const drumTrack = [...metaText(0x03, "Isan Demo Beat"), ...encodeTimedEvents(drumEvents)];
 
-  const tracks = project.drumEnabled ? [tempoTrack, pinTrack, drumTrack] : [tempoTrack, pinTrack];
+  const tracks = project.drumEnabled ? [tempoTrack, phinTrack, drumTrack] : [tempoTrack, phinTrack];
   const header = [...ascii("MThd"), ...uint32(6), ...uint16(1), ...uint16(tracks.length), ...uint16(MIDI_TICKS_PER_BEAT)];
   return new Blob([Uint8Array.from([...header, ...tracks.flatMap(midiTrack)]).buffer], { type: "audio/midi" });
 }
@@ -98,21 +112,42 @@ function writeAscii(view: DataView, offset: number, value: string) {
   for (let index = 0; index < value.length; index += 1) view.setUint8(offset + index, value.charCodeAt(index));
 }
 
-function addPinNote(samples: Float32Array, sampleRate: number, start: number, frequency: number, level: number) {
-  const duration = 1.08;
+function bendAt(points: StudioBendPoint[] | undefined, beat: number) {
+  if (!points?.length) return 0;
+  let previous = points[0];
+  for (let index = 1; index < points.length; index += 1) {
+    const next = points[index];
+    if (beat <= next.offsetBeats) {
+      const span = Math.max(0.0001, next.offsetBeats - previous.offsetBeats);
+      const mix = Math.max(0, Math.min(1, (beat - previous.offsetBeats) / span));
+      return previous.cents + (next.cents - previous.cents) * mix;
+    }
+    previous = next;
+  }
+  return previous.cents;
+}
+
+function addPhinNote(samples: Float32Array, sampleRate: number, start: number, frequency: number, level: number, noteBeats: number, secondsPerBeat: number, bendPoints?: StudioBendPoint[]) {
+  const heldDuration = Math.max(0.08, noteBeats * secondsPerBeat);
+  const duration = Math.min(8, heldDuration + 0.16);
   const startFrame = Math.max(0, Math.floor(start * sampleRate));
   const frames = Math.min(Math.floor(duration * sampleRate), samples.length - startFrame);
   const partials = [
     [1, 0.48, 5.3], [2.004, 0.3, 8.1], [3.01, 0.16, 11.5], [4.02, 0.09, 15], [5.03, 0.05, 19],
   ] as const;
+  let phase = 0;
   for (let frame = 0; frame < frames; frame += 1) {
     const time = frame / sampleRate;
     const attack = Math.min(1, time / 0.0035);
+    const release = time <= heldDuration ? 1 : Math.max(0, 1 - (time - heldDuration) / 0.16);
+    const cents = bendAt(bendPoints, time / secondsPerBeat);
+    const bentFrequency = frequency * 2 ** (cents / 1_200);
+    phase += 2 * Math.PI * bentFrequency / sampleRate;
     let sample = 0;
     for (const [multiple, partialLevel, decay] of partials) {
-      sample += Math.sin(2 * Math.PI * frequency * multiple * time) * partialLevel * Math.exp(-decay * time);
+      sample += Math.sin(phase * multiple) * partialLevel * Math.exp(-decay * time * 0.45);
     }
-    samples[startFrame + frame] += sample * attack * level;
+    samples[startFrame + frame] += sample * attack * release * level;
   }
 }
 
@@ -142,9 +177,9 @@ export function createStudioWav(project: StudioProject) {
   const duration = STUDIO_BEATS * secondsPerBeat + 1.1;
   const samples = new Float32Array(Math.ceil(duration * sampleRate));
 
-  if (!project.pinMuted) {
+  if (!project.phinMuted) {
     project.notes.forEach(note => {
-      addPinNote(samples, sampleRate, note.beat * secondsPerBeat, getPinFrequency(note.string, note.fret), project.pinVolume * note.velocity / 127 * 0.72);
+      addPhinNote(samples, sampleRate, note.beat * secondsPerBeat, getPhinFrequency(note.string, note.fret), project.phinVolume * note.velocity / 127 * 0.72, note.durationBeats, secondsPerBeat, note.bendPoints);
     });
   }
 

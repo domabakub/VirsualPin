@@ -1,7 +1,7 @@
 "use client";
 
 import type { StringIndex } from "@/data/songs";
-import { getPinNoteName } from "@/lib/audio/pinTuning";
+import { getPhinNoteName } from "@/lib/audio/phinTuning";
 
 type Props = {
   frets: [number, number, number];
@@ -11,7 +11,7 @@ type Props = {
   onPluck: (string: StringIndex) => void;
 };
 
-export function TouchPinControls({ frets, activeString, expected, onSelectFret, onPluck }: Props) {
+export function TouchPhinControls({ frets, activeString, expected, onSelectFret, onPluck }: Props) {
   return (
     <fieldset className="touch-controls">
       <legend>เลือกเฟรต แล้วกดดีดสาย</legend>
@@ -19,9 +19,9 @@ export function TouchPinControls({ frets, activeString, expected, onSelectFret, 
         <div key={string} className={`string-control ${expected?.string === string ? "is-expected" : ""}`}>
           <label htmlFor={`fret-${string}`}>สาย {string + 1}</label>
           <select id={`fret-${string}`} aria-label={`เฟรตสาย ${string + 1}`} value={frets[string]} onChange={event => onSelectFret(string, Number(event.target.value))}>
-            {Array.from({ length: 7 }, (_, fret) => <option key={fret} value={fret}>{fret} · {getPinNoteName(string, fret, true)}{fret === 0 ? " สายเปล่า" : ""}</option>)}
+            {Array.from({ length: 7 }, (_, fret) => <option key={fret} value={fret}>{fret} · {getPhinNoteName(string, fret, true)}{fret === 0 ? " สายเปล่า" : ""}</option>)}
           </select>
-          <button type="button" aria-label={`ดีด สาย ${string + 1} · ${getPinNoteName(string, frets[string], true)}`} onClick={() => onPluck(string)} className={`ui-button ${activeString === string ? "ui-primary" : ""}`}>ดีด</button>
+          <button type="button" aria-label={`ดีด สาย ${string + 1} · ${getPhinNoteName(string, frets[string], true)}`} onClick={() => onPluck(string)} className={`ui-button ${activeString === string ? "ui-primary" : ""}`}>ดีด</button>
         </div>
       ))}
     </fieldset>

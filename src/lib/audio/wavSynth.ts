@@ -1,4 +1,4 @@
-type WavKind = "pin" | "click";
+type WavKind = "phin" | "click";
 
 function writeAscii(view: DataView, offset: number, value: string) {
   for (let index = 0; index < value.length; index += 1) {
@@ -12,7 +12,7 @@ function writeAscii(view: DataView, offset: number, value: string) {
  */
 export function createSynthWavUrl(kind: WavKind) {
   const sampleRate = 44_100;
-  const duration = kind === "pin" ? 1.08 : 0.085;
+  const duration = kind === "phin" ? 1.08 : 0.085;
   const frameCount = Math.floor(sampleRate * duration);
   const buffer = new ArrayBuffer(44 + frameCount * 2);
   const view = new DataView(buffer);
@@ -36,7 +36,7 @@ export function createSynthWavUrl(kind: WavKind) {
   for (let frame = 0; frame < frameCount; frame += 1) {
     const time = frame / sampleRate;
     let sample: number;
-    if (kind === "pin") {
+    if (kind === "phin") {
       const frequency = 293.66;
       const attack = Math.min(1, time / 0.0035);
       const partials =

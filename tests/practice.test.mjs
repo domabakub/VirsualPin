@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { getPinFrequency, getPinNoteName } from "../src/lib/audio/pinTuning.ts";
+import { getPhinFrequency, getPhinNoteName } from "../src/lib/audio/phinTuning.ts";
 import { advancePractice, emptyPracticeData, getPracticeAccuracy, parsePracticeData } from "../src/lib/practice.ts";
 import { songs } from "../src/data/songs.ts";
 import { readPractice, savePractice } from "../src/hooks/usePracticeData.ts";
@@ -8,8 +8,8 @@ import { readPractice, savePractice } from "../src/hooks/usePracticeData.ts";
 test("open strings keep the established E4 / A3 / E3 tuning", () => {
   const expected = [["E4", 329.6275569], ["A3", 220], ["E3", 164.8137785]];
   expected.forEach(([name, frequency], string) => {
-    assert.equal(getPinNoteName(string, 0, true), name);
-    assert.ok(Math.abs(getPinFrequency(string, 0) - frequency) < 0.00001);
+    assert.equal(getPhinNoteName(string, 0, true), name);
+    assert.ok(Math.abs(getPhinFrequency(string, 0) - frequency) < 0.00001);
   });
 });
 
@@ -19,8 +19,8 @@ test("all 21 finger positions have the expected pitch names", () => {
     ["A3", "A♯3", "B3", "C4", "C♯4", "D4", "D♯4"],
     ["E3", "F3", "F♯3", "G3", "G♯3", "A3", "A♯3"],
   ];
-  expected.forEach((names, string) => names.forEach((name, fret) => assert.equal(getPinNoteName(string, fret, true), name)));
-  assert.equal(getPinFrequency(1, 12), 440);
+  expected.forEach((names, string) => names.forEach((name, fret) => assert.equal(getPhinNoteName(string, fret, true), name)));
+  assert.equal(getPhinFrequency(1, 12), 440);
 });
 
 test("every sample, including transformed samples, derives its label from its playable position", () => {
@@ -29,7 +29,7 @@ test("every sample, including transformed samples, derives its label from its pl
     assert.equal("progress" in song, false, "progress must not live in song fixtures");
     for (const note of song.notes) {
       assert.ok(note.fret >= 0 && note.fret <= 6);
-      assert.equal(note.label, getPinNoteName(note.string, note.fret), `${song.slug}: string ${note.string}, fret ${note.fret}`);
+      assert.equal(note.label, getPhinNoteName(note.string, note.fret), `${song.slug}: string ${note.string}, fret ${note.fret}`);
     }
   }
 });
@@ -81,7 +81,7 @@ test("unavailable browser storage preserves this session and can recover on a la
     getItem() { if (blocked) throw new Error("Storage blocked"); return persisted; },
     setItem(key, value) { if (blocked) throw new Error("Quota exceeded"); persisted = value; },
   };
-  fakeWindow.addEventListener("virtual-pin:practice-change", () => changes++);
+  fakeWindow.addEventListener("virtual-phin:practice-change", () => changes++);
   globalThis.window = fakeWindow;
   try {
     const record = { step: 3, mistakes: 1, total: 12, updatedAt: 1234 };

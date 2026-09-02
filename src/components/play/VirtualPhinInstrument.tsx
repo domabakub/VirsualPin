@@ -13,7 +13,7 @@ type Props = {
 };
 
 // A functional fret guide over the live camera, not an illustration of an instrument.
-export function VirtualPinInstrument({ frets, activeString, expected, locked, cameraActive }: Props) {
+export function VirtualPhinInstrument({ frets, activeString, expected, locked, cameraActive }: Props) {
   if (!cameraActive) return null;
   return <div className="pointer-events-none absolute inset-x-[15%] top-[62%] z-10 h-[24%] select-none rounded-xl border border-white/25 bg-black/45" aria-hidden="true">
     <div className="absolute inset-2 grid grid-cols-7">{VISUAL_FRETS.map(fret => <div key={fret} className="relative grid grid-rows-3 border-l border-white/25">

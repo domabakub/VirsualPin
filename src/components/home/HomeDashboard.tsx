@@ -8,7 +8,7 @@ import { ArrowIcon, BookIcon, MusicIcon, PlayIcon } from "@/components/icons";
 import { AppHeader } from "@/components/navigation/AppHeader";
 import { AppFooter } from "@/components/navigation/AppFooter";
 import { BottomNav } from "@/components/navigation/BottomNav";
-import { PinHeroArt } from "./PinHeroArt";
+import { PhinHeroArt } from "./PhinHeroArt";
 
 const actions = [
   { href: "/play/free-play", title: "เริ่มจากความสนุก", description: "เลือกสาย ลองดีด แล้วค้นหาเสียงที่ชอบ ไม่ต้องมีพื้นฐาน", label: "เล่นอิสระ", icon: PlayIcon, number: "01" },
@@ -36,7 +36,7 @@ export function HomeDashboard() {
           </div>
           <p className="hero-footnote">เล่นได้ทันทีบนเบราว์เซอร์ · ไม่ต้องสมัครสมาชิก</p>
         </div>
-        <PinHeroArt />
+        <PhinHeroArt />
       </section>
 
       <section className="ways-section">

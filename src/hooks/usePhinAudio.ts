@@ -3,30 +3,41 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { StringIndex } from "@/data/songs";
 import { createSynthWavUrl } from "@/lib/audio/wavSynth";
-import { getPinFrequency } from "@/lib/audio/pinTuning";
+import { getPhinFrequency } from "@/lib/audio/phinTuning";
 
 // Open-string tuning for A minor: string 3 (top) E3, string 2 A3 and
 // string 1 (bottom) E4. String indices remain zero-based internally.
 export const BASE_FREQUENCIES: Record<StringIndex, number> = {
-  0: getPinFrequency(0, 0), 1: getPinFrequency(1, 0), 2: getPinFrequency(2, 0),
+  0: getPhinFrequency(0, 0), 1: getPhinFrequency(1, 0), 2: getPhinFrequency(2, 0),
 };
 
 // The fallback WAV is synthesized at D4, independently of the open-string
 // tuning, so its playback rate must always be calculated from this pitch.
 const FALLBACK_SAMPLE_FREQUENCY = 293.66;
 
-export { getPinFrequency } from "@/lib/audio/pinTuning";
+export { getPhinFrequency } from "@/lib/audio/phinTuning";
 
 type AudioStatus = "locked" | "ready" | "error";
 type SafariAudioWindow = Window & typeof globalThis & { webkitAudioContext?: typeof AudioContext };
 type MediaPlayers = {
-  pin: HTMLAudioElement[];
+  phin: HTMLAudioElement[];
   click: HTMLAudioElement[];
   urls: [string, string];
 };
 type SafariPitchAudio = HTMLAudioElement & { webkitPreservesPitch?: boolean };
+type TouchVoice = {
+  kind: "html";
+  player: HTMLAudioElement;
+  baseRate: number;
+} | {
+  kind: "web";
+  context: AudioContext;
+  gain: GainNode;
+  baseFrequency: number;
+  oscillators: Array<{ oscillator: OscillatorNode; multiple: number }>;
+};
 
-const PIN_VOICE_COUNT = 8;
+const PHIN_VOICE_COUNT = 8;
 const CLICK_VOICE_COUNT = 2;
 
 function shouldUseHtmlAudio() {
@@ -35,14 +46,16 @@ function shouldUseHtmlAudio() {
 }
 
 /** Lightweight physical-style synthesis keeps latency low and requires no audio downloads. */
-export function usePinAudio(volume = 0.8) {
+export function usePhinAudio(volume = 0.8) {
   const contextRef = useRef<AudioContext | null>(null);
   const masterRef = useRef<GainNode | null>(null);
   const primedRef = useRef(false);
   const mediaRef = useRef<MediaPlayers | null>(null);
   const mediaUnlockedRef = useRef(false);
-  const nextPinVoiceRef = useRef(0);
+  const nextPhinVoiceRef = useRef(0);
   const nextClickVoiceRef = useRef(0);
+  const touchVoicesRef = useRef(new Map<string, TouchVoice>());
+  const touchVoiceRequestsRef = useRef(new Map<string, symbol>());
   const [status, setStatus] = useState<AudioStatus>("locked");
   const [error, setError] = useState<string | null>(null);
 
@@ -62,19 +75,41 @@ export function usePinAudio(volume = 0.8) {
 
   const getMediaPlayers = useCallback(() => {
     if (!mediaRef.current) {
-      const urls: [string, string] = [createSynthWavUrl("pin"), createSynthWavUrl("click")];
-      const pin = Array.from({ length: PIN_VOICE_COUNT }, () => new Audio(urls[0]));
+      const urls: [string, string] = [createSynthWavUrl("phin"), createSynthWavUrl("click")];
+      const phin = Array.from({ length: PHIN_VOICE_COUNT }, () => new Audio(urls[0]));
       const click = Array.from({ length: CLICK_VOICE_COUNT }, () => new Audio(urls[1]));
-      for (const player of [...pin, ...click]) {
+      for (const player of [...phin, ...click]) {
         player.preload = "auto";
         player.setAttribute("playsinline", "");
         player.style.display = "none";
         document.body.appendChild(player);
       }
-      mediaRef.current = { pin, click, urls };
+      mediaRef.current = { phin, click, urls };
     }
     return mediaRef.current;
   }, []);
+
+  const unlockWebAudio = useCallback(async () => {
+    try {
+      const context = getContext();
+
+      // Prime Web Audio while the pointer event still counts as a direct user
+      // gesture. This gives iPad the same low-latency path as desktop.
+      if (!primedRef.current) {
+        const source = context.createBufferSource();
+        source.buffer = context.createBuffer(1, 1, context.sampleRate);
+        source.connect(context.destination);
+        source.start(0);
+        primedRef.current = true;
+      }
+
+      if (context.state !== "running") await context.resume();
+      return context.state === "running";
+    } catch (reason) {
+      console.error("Unable to unlock low-latency Web Audio", reason);
+      return false;
+    }
+  }, [getContext]);
 
   const unlock = useCallback(async () => {
     try {
@@ -83,7 +118,7 @@ export function usePinAudio(volume = 0.8) {
         if (!mediaUnlockedRef.current) {
           // Every pooled element must start in this direct tap call stack on
           // iOS. Once authorized, separate voices can overlap for tremolo.
-          const players = [...media.pin, ...media.click];
+          const players = [...media.phin, ...media.click];
           const starts = players.map((player) => {
             player.volume = 0.01 * volume;
             player.currentTime = 0;
@@ -101,21 +136,7 @@ export function usePinAudio(volume = 0.8) {
         return true;
       }
 
-      const context = getContext();
-
-      // iOS Safari needs an audio source to start inside a direct user gesture.
-      // Prime a silent one-frame buffer before awaiting resume(), so later camera
-      // callbacks are allowed to play without another tap.
-      if (!primedRef.current) {
-        const source = context.createBufferSource();
-        source.buffer = context.createBuffer(1, 1, context.sampleRate);
-        source.connect(context.destination);
-        source.start(0);
-        primedRef.current = true;
-      }
-
-      if (context.state !== "running") await context.resume();
-      const ready = context.state === "running";
+      const ready = await unlockWebAudio();
       setStatus(ready ? "ready" : "locked");
       setError(ready ? null : "แตะปุ่มเปิดเสียงอีกครั้ง");
       return ready;
@@ -125,21 +146,22 @@ export function usePinAudio(volume = 0.8) {
       setError("เปิดระบบเสียงไม่สำเร็จ กรุณาตรวจสอบว่า iPad ไม่ได้อยู่ในโหมดปิดเสียง");
       return false;
     }
-  }, [getContext, getMediaPlayers, volume]);
+  }, [getMediaPlayers, unlockWebAudio, volume]);
 
   const pluck = useCallback(async (string: StringIndex, fret: number) => {
     if (!(await unlock())) return false;
 
     if (shouldUseHtmlAudio()) {
       try {
-        const voices = getMediaPlayers().pin;
-        const voiceIndex = nextPinVoiceRef.current;
+        const voices = getMediaPlayers().phin;
+        const voiceIndex = nextPhinVoiceRef.current;
         const player = voices[voiceIndex];
-        nextPinVoiceRef.current = (voiceIndex + 1) % voices.length;
+        nextPhinVoiceRef.current = (voiceIndex + 1) % voices.length;
         player.pause();
         player.currentTime = 0;
+        player.loop = false;
         player.volume = volume;
-        const playbackRate = getPinFrequency(string, fret) / FALLBACK_SAMPLE_FREQUENCY;
+        const playbackRate = getPhinFrequency(string, fret) / FALLBACK_SAMPLE_FREQUENCY;
         // Safari preserves pitch when playbackRate changes unless explicitly
         // disabled, which made every fret sound like the base D note.
         player.preservesPitch = false;
@@ -165,7 +187,7 @@ export function usePinAudio(volume = 0.8) {
     master.gain.value = 0.78 * volume;
 
     const now = context.currentTime + 0.004;
-    const frequency = getPinFrequency(string, fret);
+    const frequency = getPhinFrequency(string, fret);
     const voiceGain = context.createGain();
     const highpass = context.createBiquadFilter();
     const presence = context.createBiquadFilter();
@@ -225,6 +247,121 @@ export function usePinAudio(volume = 0.8) {
     pick.stop(now + 0.03);
     return true;
   }, [getContext, getMediaPlayers, unlock, volume]);
+
+  const stopTouchVoice = useCallback((voiceId: string) => {
+    touchVoiceRequestsRef.current.delete(voiceId);
+    const voice = touchVoicesRef.current.get(voiceId);
+    if (!voice) return;
+    touchVoicesRef.current.delete(voiceId);
+    if (voice.kind === "html") {
+      voice.player.pause();
+      voice.player.currentTime = 0;
+      voice.player.loop = false;
+      return;
+    }
+    const now = voice.context.currentTime;
+    voice.gain.gain.cancelScheduledValues(now);
+    voice.gain.gain.setValueAtTime(Math.max(0.0001, voice.gain.gain.value), now);
+    voice.gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.055);
+    voice.oscillators.forEach(({ oscillator }) => oscillator.stop(now + 0.07));
+  }, []);
+
+  const startTouchVoice = useCallback(async (voiceId: string, string: StringIndex, fret: number) => {
+    stopTouchVoice(voiceId);
+    const request = Symbol(voiceId);
+    touchVoiceRequestsRef.current.set(voiceId, request);
+
+    if (shouldUseHtmlAudio()) {
+      try {
+        const voices = getMediaPlayers().phin;
+        const voiceIndex = nextPhinVoiceRef.current;
+        const player = voices[voiceIndex];
+        nextPhinVoiceRef.current = (voiceIndex + 1) % voices.length;
+        player.pause();
+        player.currentTime = 0;
+        player.loop = true;
+        player.volume = volume;
+        player.preservesPitch = false;
+        (player as SafariPitchAudio).webkitPreservesPitch = false;
+        const baseRate = getPhinFrequency(string, fret) / FALLBACK_SAMPLE_FREQUENCY;
+        player.defaultPlaybackRate = baseRate;
+        player.playbackRate = baseRate;
+        touchVoicesRef.current.set(voiceId, { kind: "html", player, baseRate });
+
+        // play() must run before the first await so Safari sees the original
+        // pointer event. Only the requested voice starts; the remaining pool is
+        // prepared in advance instead of being unlocked one-by-one here.
+        const start = player.play();
+        touchVoiceRequestsRef.current.delete(voiceId);
+        await start;
+        setStatus("ready");
+        setError(null);
+        return true;
+      } catch (reason) {
+        console.error("HTML audio touch voice failed", reason);
+        touchVoiceRequestsRef.current.delete(voiceId);
+        touchVoicesRef.current.delete(voiceId);
+        return false;
+      }
+    }
+
+    if (!(await unlockWebAudio())) {
+      if (touchVoiceRequestsRef.current.get(voiceId) === request) touchVoiceRequestsRef.current.delete(voiceId);
+      return false;
+    }
+    if (touchVoiceRequestsRef.current.get(voiceId) !== request) return false;
+
+    const context = getContext();
+    const master = masterRef.current;
+    if (!master) return false;
+    master.gain.value = 0.78 * volume;
+    const now = context.currentTime + 0.002;
+    const baseFrequency = getPhinFrequency(string, fret);
+    const voiceGain = context.createGain();
+    const highpass = context.createBiquadFilter();
+    const lowpass = context.createBiquadFilter();
+    highpass.type = "highpass";
+    highpass.frequency.value = 105;
+    lowpass.type = "lowpass";
+    lowpass.frequency.value = 7_600;
+    voiceGain.gain.setValueAtTime(0.0001, now);
+    voiceGain.gain.exponentialRampToValueAtTime(0.64, now + 0.005);
+    voiceGain.connect(highpass).connect(lowpass).connect(master);
+    const partials = [
+      { multiple: 1, level: 0.46 },
+      { multiple: 2.004, level: 0.22 },
+      { multiple: 3.01, level: 0.1 },
+      { multiple: 4.02, level: 0.045 },
+    ];
+    const oscillators = partials.map(partial => {
+      const oscillator = context.createOscillator();
+      const partialGain = context.createGain();
+      oscillator.type = "sine";
+      oscillator.frequency.setValueAtTime(baseFrequency * partial.multiple, now);
+      partialGain.gain.setValueAtTime(partial.level, now);
+      partialGain.gain.exponentialRampToValueAtTime(Math.max(0.012, partial.level * 0.16), now + 2.8);
+      oscillator.connect(partialGain).connect(voiceGain);
+      oscillator.start(now);
+      return { oscillator, multiple: partial.multiple };
+    });
+    touchVoiceRequestsRef.current.delete(voiceId);
+    touchVoicesRef.current.set(voiceId, { kind: "web", context, gain: voiceGain, baseFrequency, oscillators });
+    return true;
+  }, [getContext, getMediaPlayers, stopTouchVoice, unlockWebAudio, volume]);
+
+  const bendTouchVoice = useCallback((voiceId: string, cents: number) => {
+    const voice = touchVoicesRef.current.get(voiceId);
+    if (!voice) return;
+    const ratio = 2 ** (Math.max(-1_200, Math.min(1_200, cents)) / 1_200);
+    if (voice.kind === "html") {
+      voice.player.playbackRate = Math.max(0.25, Math.min(4, voice.baseRate * ratio));
+      return;
+    }
+    const now = voice.context.currentTime;
+    voice.oscillators.forEach(({ oscillator, multiple }) => {
+      oscillator.frequency.setTargetAtTime(voice.baseFrequency * multiple * ratio, now, 0.012);
+    });
+  }, []);
 
   const click = useCallback(async () => {
     if (!(await unlock())) return false;
@@ -325,16 +462,25 @@ export function usePinAudio(volume = 0.8) {
     return true;
   }, [getContext, getMediaPlayers, unlock, volume]);
 
+  useEffect(() => {
+    // Construct and preload the fallback voices after mount. Doing this before
+    // the first touch removes WAV synthesis and element creation from iPad's
+    // latency-sensitive pointer event.
+    if (shouldUseHtmlAudio()) getMediaPlayers();
+  }, [getMediaPlayers]);
+
   useEffect(() => () => {
+    touchVoiceRequestsRef.current.clear();
+    touchVoicesRef.current.forEach((_, voiceId) => stopTouchVoice(voiceId));
     void contextRef.current?.close();
     if (mediaRef.current) {
-      [...mediaRef.current.pin, ...mediaRef.current.click].forEach((player) => {
+      [...mediaRef.current.phin, ...mediaRef.current.click].forEach((player) => {
         player.pause();
         player.remove();
       });
       mediaRef.current.urls.forEach((url) => URL.revokeObjectURL(url));
     }
-  }, []);
+  }, [stopTouchVoice]);
 
-  return { unlock, pluck, click, percussion, status, error };
+  return { unlock, pluck, click, percussion, startTouchVoice, bendTouchVoice, stopTouchVoice, status, error };
 }

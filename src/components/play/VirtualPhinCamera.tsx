@@ -17,8 +17,8 @@ import {
   detectString,
   smoothLandmark,
   type CameraPoint,
-} from "@/lib/hand-tracking/virtualPinInteraction";
-import { VirtualPinInstrument } from "./VirtualPinInstrument";
+} from "@/lib/hand-tracking/virtualPhinInteraction";
+import { VirtualPhinInstrument } from "./VirtualPhinInstrument";
 
 const PALM_ANCHOR = [0, 5, 9, 13, 17] as const;
 const FRET_LABELS = [0, 1, 2, 3, 4, 5, 6];
@@ -68,7 +68,7 @@ function findHandForSideZone(
     ?? candidates.find(({ x }) => isInZone(x))?.hand;
 }
 
-export function VirtualPinCamera({ frets, activeString, expected, onSelectFret, onPluck, onUnlockAudio, defaultFacing = "user", onLiveChange, className = "" }: Props) {
+export function VirtualPhinCamera({ frets, activeString, expected, onSelectFret, onPluck, onUnlockAudio, defaultFacing = "user", onLiveChange, className = "" }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const camera = useCamera(videoRef);
@@ -375,7 +375,7 @@ export function VirtualPinCamera({ frets, activeString, expected, onSelectFret, 
         </div>
       )}
 
-      <VirtualPinInstrument frets={frets} activeString={activeString} expected={expected} locked={focusedNote} cameraActive={isLive} />
+      <VirtualPhinInstrument frets={frets} activeString={activeString} expected={expected} locked={focusedNote} cameraActive={isLive} />
 
       <div className="absolute bottom-3 left-3 z-30 rounded-full bg-black/85 px-3 py-1 text-xs text-white"><span className="inline-flex items-center gap-1"><ShieldIcon className="size-3" />ประมวลผลบนเครื่อง</span></div>
     </div>

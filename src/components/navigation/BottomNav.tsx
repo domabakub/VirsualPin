@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookIcon, HomeIcon, MusicIcon, SettingsIcon } from "@/components/icons";
+import { BookIcon, ClockIcon, HomeIcon, MusicIcon, SettingsIcon } from "@/components/icons";
 import { navigationItems } from "./AppHeader";
 
-const icons = [HomeIcon, MusicIcon, BookIcon, SettingsIcon];
+const icons = [HomeIcon, MusicIcon, BookIcon, ClockIcon, SettingsIcon];
 export function BottomNav({ learningMode = false }: { learningMode?: boolean }) {
   const pathname = usePathname();
   return <nav aria-label="เมนูหลักบนมือถือ" className="mobile-navigation">
