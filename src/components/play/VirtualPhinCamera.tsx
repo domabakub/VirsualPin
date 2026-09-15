@@ -32,6 +32,7 @@ type Props = {
   onUnlockAudio: () => void;
   defaultFacing?: "user" | "environment";
   onLiveChange?: (live: boolean) => void;
+  standaloneMode?: boolean;
   className?: string;
 };
 
@@ -68,7 +69,7 @@ function findHandForSideZone(
     ?? candidates.find(({ x }) => isInZone(x))?.hand;
 }
 
-export function VirtualPhinCamera({ frets, activeString, expected, onSelectFret, onPluck, onUnlockAudio, defaultFacing = "user", onLiveChange, className = "" }: Props) {
+export function VirtualPhinCamera({ frets, activeString, expected, onSelectFret, onPluck, onUnlockAudio, defaultFacing = "user", onLiveChange, standaloneMode = false, className = "" }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const camera = useCamera(videoRef);
@@ -328,11 +329,11 @@ export function VirtualPhinCamera({ frets, activeString, expected, onSelectFret,
 
   return (
     <section className={`ui-panel camera-panel ${className}`}>
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-lg font-semibold">เล่นด้วยกล้อง</h2><p className="text-sm text-slate-600">ทางเลือกเสริม · ใช้ปุ่มด้านบนได้เสมอ</p></div>
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-lg font-semibold">เล่นด้วยกล้อง</h2><p className="text-sm text-slate-600">{standaloneMode ? "AR ควบคุมด้วยมือจริง · ประมวลผลบนเครื่อง" : "ทางเลือกเสริม · ใช้ปุ่มด้านบนได้เสมอ"}</p></div>
         <button type="button" onClick={isLive || camera.phase === "requesting" ? camera.stop : startCamera} className="ui-button"><CameraIcon className="size-4" />{camera.phase === "requesting" ? "ยกเลิกการเปิดกล้อง" : isLive ? "หยุดกล้อง" : "เปิดกล้อง"}</button>
       </div>
       <p role="status" className="mb-3 text-sm text-slate-700">{camera.phase === "requesting" ? "กำลังขออนุญาตใช้กล้องจากเบราว์เซอร์…" : isLive && (tracker.phase === "loading" || tracker.phase === "idle") ? "กำลังโหลดระบบตรวจจับมือ… ครั้งแรกอาจใช้เวลาสักครู่" : isLive && tracker.phase === "tracking" ? "กล้องพร้อม · วางมือทั้งสองให้เห็นในภาพ" : "ไม่บันทึกหรือส่งภาพกล้องขึ้นเซิร์ฟเวอร์"}</p>
-      {(camera.error || (isLive && tracker.error)) && <p role="alert" className="mb-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-900">{camera.error ?? tracker.error} · ใช้ปุ่มดีดสายด้านบนต่อได้</p>}
+      {(camera.error || (isLive && tracker.error)) && <p role="alert" className="mb-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-900">{camera.error ?? tracker.error} · {standaloneMode ? "สลับกลับไปโหมดแตะโน้ตได้" : "ใช้ปุ่มดีดสายด้านบนต่อได้"}</p>}
       <div className={`camera-stage relative min-w-0 overflow-hidden rounded-2xl bg-[#1d1d1f] ${isLive ? "h-[min(60svh,420px)] min-h-[280px] sm:h-[500px]" : "hidden"}`}>
       <video ref={videoRef} muted playsInline className={`absolute inset-0 size-full object-cover transition-opacity duration-300 ${mirrored ? "scale-x-[-1]" : "scale-x-100"} ${isLive ? "opacity-100" : "opacity-0"}`} />
       <canvas ref={canvasRef} aria-label="จุดติดตามมือสำหรับเล่นพิณ" className="pointer-events-none absolute inset-0 z-20 size-full" />

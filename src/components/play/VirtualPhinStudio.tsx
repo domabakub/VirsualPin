@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ClockIcon, PlayIcon, VolumeIcon } from "@/components/icons";
+import { CameraIcon, ClockIcon, HandIcon, PlayIcon, VolumeIcon } from "@/components/icons";
 import { AppHeader } from "@/components/navigation/AppHeader";
 import type { Song, StringIndex } from "@/data/songs";
 import { usePhinAudio } from "@/hooks/usePhinAudio";
@@ -13,6 +13,34 @@ import { getPhinNoteName } from "@/lib/audio/phinTuning";
 import { formatTakeDuration, type TakeInputSource } from "@/lib/takes/types";
 import { VirtualPhinCamera } from "./VirtualPhinCamera";
 import { TouchPhinControls } from "./TouchPhinControls";
+
+type InputMode = "touch" | "ar";
+
+function InputModeGateway({ onSelect }: { onSelect: (mode: InputMode) => void }) {
+  return (
+    <section className="play-mode-gateway" aria-labelledby="play-mode-title">
+      <div className="play-mode-gateway-heading">
+        <div>
+          <p className="note-eyebrow">INPUT MODE</p>
+          <h2 id="play-mode-title">เลือกวิธีเล่นของคุณ.</h2>
+        </div>
+        <p>เลือกครั้งแรก แล้วสลับได้จากปุ่มเดียวในพื้นที่เล่น</p>
+      </div>
+      <div className="play-mode-gateway-options">
+        <button type="button" onClick={() => onSelect("touch")}>
+          <span className="play-mode-gateway-top"><HandIcon /><b>01</b></span>
+          <span className="play-mode-gateway-copy"><strong>แตะเล่นบนหน้าจอ</strong><small>จิ้มโน้ตบนคอพิณทั้ง 21 ตำแหน่ง เสียงออกทันที เหมาะกับการเริ่มเล่นเร็ว ๆ</small></span>
+          <span className="play-mode-gateway-action">เลือก Touch <i aria-hidden="true">→</i></span>
+        </button>
+        <button type="button" onClick={() => onSelect("ar")}>
+          <span className="play-mode-gateway-top"><CameraIcon /><b>02</b></span>
+          <span className="play-mode-gateway-copy"><strong>เล่นด้วย AR กล้อง</strong><small>ใช้มือจริงจับเฟรตและดีดสาย ภาพประมวลผลบนอุปกรณ์และไม่ถูกบันทึก</small></span>
+          <span className="play-mode-gateway-action">เลือก AR <i aria-hidden="true">→</i></span>
+        </button>
+      </div>
+    </section>
+  );
+}
 
 export function VirtualPhinStudio({ song, freePlay = false, backHref, backLabel, practiceSource = "sample" }: { song: Song; freePlay?: boolean; backHref?: string; backLabel?: string; practiceSource?: "sample" | "take" }) {
   const { records, preferences, ready, storageTemporary } = usePracticeData();
@@ -27,7 +55,7 @@ export function VirtualPhinStudio({ song, freePlay = false, backHref, backLabel,
   const [restartPending, setRestartPending] = useState(false);
   const [feedback, setFeedback] = useState("");
   const [lastNote, setLastNote] = useState("");
-  const [cameraLive, setCameraLive] = useState(false);
+  const [inputMode, setInputMode] = useState<InputMode | null>(null);
   const activeTimer = useRef<number | null>(null);
   const runningRef = useRef(false);
   const operationRef = useRef(0);
@@ -169,7 +197,7 @@ export function VirtualPhinStudio({ song, freePlay = false, backHref, backLabel,
           <h1>{freePlay ? "เล่นพิณอิสระ" : song.title}</h1>
           <span className="practice-badge">{freePlay ? "FREE PLAY · ไม่เก็บคะแนน" : practiceSource === "take" ? "PRACTICE · จากบันทึกของฉัน" : "PRACTICE · แบบฝึกตัวอย่าง"}</span>
         </div>
-        <div className="practice-layout">
+        {inputMode === null ? <InputModeGateway onSelect={setInputMode} /> : <div className="practice-layout">
           <section className="ui-panel current-note-panel practice-current" aria-label={freePlay ? "โน้ตที่เล่นล่าสุด" : "โน้ตปัจจุบัน"}>
             <div className="current-note-top">
               <div>
@@ -188,12 +216,17 @@ export function VirtualPhinStudio({ song, freePlay = false, backHref, backLabel,
             {!freePlay && <progress className="mt-3" value={step} max={song.notes.length} aria-label="ความคืบหน้าการฝึก" />}
           </section>
           <section aria-label="พื้นที่เล่นพิณ" className="practice-playing">
-            <div className={`ui-panel touch-panel ${cameraLive ? "order-2" : "order-1"}`}>
-              <TouchPhinControls frets={frets} activeString={activeString} expected={practicing ? expected : undefined} onSelectFret={selectFret} onPluck={pluckTouch} />
-              <p role="status" aria-atomic="true" className="mt-3 min-h-12 text-sm leading-6 text-slate-700">{feedback || (freePlay ? "เลือกเฟรตแล้วดีดได้เลย ไม่ต้องใช้กล้อง" : complete ? "ฝึกครบแล้ว · ดูสรุปผลหรือเริ่มรอบใหม่ได้ด้านล่าง" : step > 0 || mistakes > 0 ? "พบผลฝึกเดิม · กดฝึกต่อเพื่อเล่นจากโน้ตที่ค้างไว้" : "ลองเสียงได้ทันที หรือกดเริ่มฝึกเพื่อเก็บคะแนน")}</p>
-              {freePlay && lastNote && <p className="text-sm font-medium text-blue-800">{lastNote}</p>}
+            <div className="play-mode-stage">
+              <button type="button" className="play-mode-switch" onClick={() => setInputMode(inputMode === "touch" ? "ar" : "touch")}>
+                {inputMode === "touch" ? <CameraIcon /> : <HandIcon />}
+                <span>สลับเป็น {inputMode === "touch" ? "AR" : "Touch"}</span>
+              </button>
+              {inputMode === "touch" ? <div className="ui-panel touch-panel">
+                <TouchPhinControls frets={frets} activeString={activeString} expected={practicing ? expected : undefined} onSelectFret={selectFret} onPluck={pluckTouch} />
+                <p role="status" aria-atomic="true" className="mt-3 min-h-12 text-sm leading-6 text-slate-700">{feedback || (freePlay ? "แตะโน้ตตำแหน่งใดก็ได้บนคอพิณ เสียงจะเล่นทันที" : complete ? "ฝึกครบแล้ว · ดูสรุปผลหรือเริ่มรอบใหม่ได้ด้านล่าง" : step > 0 || mistakes > 0 ? "พบผลฝึกเดิม · กดฝึกต่อเพื่อเล่นจากโน้ตที่ค้างไว้" : "กดเริ่มฝึก แล้วแตะโน้ตที่เรืองแสงบนคอพิณ")}</p>
+                {freePlay && lastNote && <p className="text-sm font-medium text-blue-800">{lastNote}</p>}
+              </div> : <VirtualPhinCamera frets={frets} activeString={activeString} expected={practicing ? expected : undefined} onSelectFret={selectFret} onPluck={pluckCamera} onUnlockAudio={() => { void unlock(); }} defaultFacing={preferences.facing} standaloneMode />}
             </div>
-            <VirtualPhinCamera frets={frets} activeString={activeString} expected={practicing ? expected : undefined} onSelectFret={selectFret} onPluck={pluckCamera} onUnlockAudio={() => { void unlock(); }} defaultFacing={preferences.facing} onLiveChange={setCameraLive} className={cameraLive ? "order-1" : "order-2"} />
           </section>
           <aside aria-label="ผลการฝึกและเครื่องมือ" className="practice-sidebar">
             {!freePlay && !complete && <section className="ui-panel practice-next"><h2 className="text-lg font-semibold">โน้ตถัดไป</h2><ol className="next-notes">{song.notes.slice(step + 1, step + 4).map((note, index) => <li key={index} className="min-w-0"><p className="text-lg font-semibold">{note.label}</p><p className="text-xs text-slate-600">สาย {note.string + 1}<br />เฟรต {note.fret}</p></li>)}</ol>{step === song.notes.length - 1 && <p className="mt-2 text-sm text-slate-600">เหลือโน้ตสุดท้ายแล้ว</p>}</section>}
@@ -225,12 +258,12 @@ export function VirtualPhinStudio({ song, freePlay = false, backHref, backLabel,
             </section>}
             <details className="ui-panel practice-help text-sm leading-6 text-slate-700">
               <summary className="min-h-11 cursor-pointer font-semibold text-[#102544]">วิธีเล่นและข้อมูลแบบฝึก</summary>
-              <ol className="mt-3 list-decimal space-y-2 pl-5"><li>เลือกเฟรต 0–6 ของสายที่ต้องการ แล้วกด “ดีด”</li><li>โหมดเพลง: กดเริ่ม แล้วเล่นตามสายและเฟรตในกล่องโน้ตปัจจุบัน</li><li>เปิดกล้องเมื่อต้องการใช้มือจริง หรือใช้ปุ่มหน้าจอต่อได้เสมอ</li></ol>
+              {freePlay ? <ol className="mt-3 list-decimal space-y-2 pl-5"><li>เลือก “Touch” แล้วจิ้มตำแหน่งบนคอพิณเพื่อเล่นทันที</li><li>เลือก “AR” แล้วกดเปิดกล้องเมื่อต้องการใช้มือจริง</li><li>ใช้ปุ่มซ้ายบนของพื้นที่เล่นเพื่อสลับโหมด โน้ตจะต่อกันใน Take เดียว</li></ol> : <ol className="mt-3 list-decimal space-y-2 pl-5"><li>กดเริ่มฝึก แล้วแตะโน้ตที่เรืองแสงบนคอพิณตามลำดับ</li><li>ในโหมด AR ให้กดเปิดกล้องและเล่นสายกับเฟรตตามโน้ตปัจจุบัน</li><li>ใช้ปุ่มซ้ายบนของพื้นที่เล่นเพื่อสลับ Touch และ AR ได้ตลอด</li></ol>}
               <p className="mt-3">{preferences.shortcuts ? "ปุ่มลัดเปิดอยู่: 1 / 2 / 3 สำหรับดีดแต่ละสาย" : "เปิดปุ่มลัด 1 / 2 / 3 ได้ที่หน้าตั้งค่า"}</p>
               {!freePlay && practiceSource === "sample" && <p className="mt-3 rounded-xl bg-amber-50 p-3 text-amber-950">แบบฝึกนี้ใช้ทดสอบระบบ ยังไม่ใช่ทำนองต้นฉบับที่ตรวจสอบแล้ว ใช้การตั้งสาย E4 / A3 / E3</p>}
             </details>
           </aside>
-        </div>
+        </div>}
       </main>
     </div>
   );

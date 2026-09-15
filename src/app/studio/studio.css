@@ -204,11 +204,6 @@
 .studio-touch-legend span { display: inline-flex; align-items: center; gap: 6px; }
 .studio-touch-legend i { width: 9px; height: 9px; border-radius: 50%; background: var(--studio-green); }
 .studio-touch-legend i.is-root { background: #ffae67; }
-.studio-instrument .touch-controls legend { color: var(--studio-muted); margin-bottom: 5px; }
-.studio-instrument .string-control { grid-template-columns: 48px minmax(0, 1fr) 56px; padding-block: 7px; border-color: var(--studio-line); }
-.studio-instrument .string-control select, .studio-instrument .string-control .ui-button { min-height: 38px; border-color: rgba(255, 255, 255, .08); color: var(--studio-text); background: var(--surface-high); box-shadow: var(--soft-shadow-sm); }
-.studio-instrument .string-control select { box-shadow: var(--soft-inset); }
-.studio-instrument .string-control .ui-button:hover { transform: translateY(-1px); background: var(--studio-green-dark); }
 .studio-instrument .camera-panel { padding: 0; color: var(--studio-text); background: transparent; box-shadow: none; }
 .studio-instrument .camera-panel h2, .studio-instrument .camera-panel p, .studio-instrument .camera-panel summary { color: var(--studio-muted) !important; }
 .studio-instrument .camera-stage { max-height: 430px; }
