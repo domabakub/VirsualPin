@@ -419,7 +419,7 @@ export function VirtualPhinCamera({ frets, activeString, expected, onSelectFret,
       {camera.phase === "requesting" && <div className="camera-loading absolute inset-0 z-10 grid place-items-center text-sm text-white">กำลังเปิดกล้อง…</div>}
       {!isLive && <div className="studio-grid absolute inset-0 opacity-30" />}
 
-      <div className="absolute inset-x-0 top-0 z-30 flex items-center justify-between p-4">
+      <div className="camera-feed-meta absolute inset-x-0 top-0 z-30 flex items-center justify-between p-4">
         <div className="flex items-center gap-2">
           {isLive && expected && <span className="max-w-[190px] rounded-xl bg-black/85 px-3 py-2 text-xs font-semibold text-white">เป้าหมาย: สาย {expected.string + 1} · เฟรต {expected.fret}</span>}
           {isLive && tracker.phase === "tracking" && <span className="hidden rounded-full bg-black/85 px-3 py-2 text-xs text-white sm:block">{camera.facing === "user" ? "กล้องหน้า · กระจก" : "กล้องหลัง · ภาพจริง"} · {tracker.hands.length}/2 มือ</span>}
@@ -427,7 +427,7 @@ export function VirtualPhinCamera({ frets, activeString, expected, onSelectFret,
         {isLive && <button type="button" onClick={camera.flip} aria-label="สลับกล้อง" className="grid size-11 place-items-center rounded-full border border-white/45 bg-black/75 text-white backdrop-blur-sm hover:bg-black/90"><FlipIcon className="size-4" /></button>}
       </div>
 
-      {isLive && tracker.phase === "tracking" && tracker.hands.length === 0 && <div className="pointer-events-none absolute inset-x-3 top-[13%] z-10 flex items-center gap-2 rounded-xl border border-white/30 bg-black/85 px-3 py-2 text-xs text-white"><HandIcon className="size-4 shrink-0 text-[#f1cb8c]" />วางมือซ้ายและขวาในภาพ</div>}
+      {isLive && tracker.phase === "tracking" && tracker.hands.length === 0 && <div className="pointer-events-none absolute inset-x-3 top-[17%] z-10 flex items-center gap-2 rounded-xl border border-white/30 bg-black/85 px-3 py-2 text-xs text-white"><HandIcon className="size-4 shrink-0 text-[#f1cb8c]" />วางมือซ้ายและขวาในภาพ</div>}
 
       {isLive && (
         <div className="pointer-events-none absolute inset-0 z-[25] text-white">
@@ -461,6 +461,9 @@ export function VirtualPhinCamera({ frets, activeString, expected, onSelectFret,
 
       <div className="absolute bottom-3 left-3 z-30 rounded-full bg-black/85 px-3 py-1 text-xs text-white"><span className="inline-flex items-center gap-1"><ShieldIcon className="size-3" />ประมวลผลบนเครื่อง</span></div>
     </div>
+    </section>
+    <details className="ui-panel camera-settings text-sm text-slate-700">
+    <summary className="min-h-11 cursor-pointer font-semibold">ตั้งค่ามือและวิธีควบคุม</summary>
     <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-slate-700">
       <label htmlFor="fret-sensitivity" className="font-semibold">ความไวเฟรต</label>
       <select id="fret-sensitivity" value={fretSensitivity} onChange={(event) => changeSensitivity(event.target.value as FretSensitivity)} className="min-h-11 rounded-lg border border-slate-300 bg-white px-3">
@@ -470,7 +473,7 @@ export function VirtualPhinCamera({ frets, activeString, expected, onSelectFret,
       <span className="text-xs text-slate-600">วางมือซ้ายใกล้จุดเริ่มก่อนกด แล้วเลื่อนไปทางขวา</span>
     </div>
     <details className="mt-3 text-sm leading-6 text-slate-700"><summary className="min-h-11 cursor-pointer font-semibold">วิธีควบคุมด้วยมือ</summary><ul className="mt-2 list-disc space-y-2 pl-5"><li>วางมือซ้ายด้านซ้ายของภาพ กดตั้งเฟรต 0 แล้วเลื่อนไปทางขวาเพื่อเลือกเฟรต 0–6</li><li>จีบโป้งกับนิ้วชี้/กลาง/นางซ้าย เพื่อเล่นสาย 1/2/3 โดยอัตโนมัติ</li><li>ปล่อยนิ้วชี้ซ้ายจะเล่นสาย 1 เฟรต 0; ปล่อยนิ้วกลาง/นางไม่มีเสียง</li><li>มือขวาจีบโป้งกับนิ้วชี้ค้าง แล้วลากผ่านสายที่ต้องการ</li><li>หากไม่จับเฟรตด้วยมือซ้าย จะเป็นสายเปล่า</li></ul></details>
-    </section>
+    </details>
     </div>
   );
 }

@@ -309,12 +309,12 @@ progress::-moz-progress-bar { background: var(--action); border-radius: 999px; }
 .next-notes li { background: var(--soft); border-radius: 12px; padding: 12px 4px; text-align: center; }
 .next-notes li > p:first-child { font-size: 22px; font-weight: 500; }
 .next-notes li > p:last-child { font-size: 10px; color: var(--text-secondary); margin-top: 6px; }
-.camera-workspace { display: flex; min-width: 0; max-height: 320px; flex-direction: column; overflow: hidden; transition: max-height .65s cubic-bezier(.22,1,.36,1); }
-.camera-workspace.is-expanded { height: 100%; max-height: 1100px; }
+.camera-workspace { position: relative; display: flex; min-width: 0; flex-direction: column; }
+.camera-workspace.is-expanded { height: auto; }
 .camera-panel { display: flex; min-height: 116px; flex: 1; flex-direction: column; border: 0; padding: 24px 28px; }
 .camera-workspace:not(.is-expanded) .camera-panel { flex: 0 0 auto; }
 .camera-stage { height: 0; min-height: 0; max-height: 0; flex: 0 0 auto; opacity: 0; transform: translateY(-8px) scale(.985); transition: max-height .55s cubic-bezier(.22,1,.36,1), min-height .55s cubic-bezier(.22,1,.36,1), opacity .35s ease, transform .55s cubic-bezier(.22,1,.36,1); }
-.camera-workspace.is-expanded .camera-stage { height: auto; min-height: 280px; max-height: 1000px; flex: 1 1 auto; opacity: 1; transform: none; }
+.camera-workspace.is-expanded .camera-stage { height: max(560px, calc(100svh - 32px)); min-height: 560px; max-height: none; flex: 0 0 auto; opacity: 1; transform: none; animation: camera-reveal .45s ease-out; }
 .camera-loading { background: radial-gradient(circle at 50% 42%,#394d5d,#1d1d1f 72%); }
 .camera-panel h2 { font-size: 15px; font-weight: 500; }
 .camera-panel > div > div > p { font-size: 12px; color: var(--text-secondary); }
@@ -475,6 +475,28 @@ progress::-moz-progress-bar { background: var(--action); border-radius: 999px; }
 @media (prefers-reduced-motion: reduce) {
   .camera-workspace, .camera-stage, .play-mode-switch { transition: none; }
 }
+/* Give the video its own viewport-sized surface; controls never subtract from it. */
+.camera-workspace.is-expanded .camera-panel { position: relative; flex: none; padding: 0; overflow: hidden; }
+.camera-workspace.is-expanded .camera-panel > p[role=status] { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); }
+.camera-workspace.is-expanded .camera-panel > p[role=alert] { position: absolute; inset: auto 16px 48px; z-index: 40; }
+.camera-workspace.is-expanded > .play-mode-toolbar { position: absolute; z-index: 40; top: 16px; left: 16px; right: 16px; min-height: 44px; margin: 0; padding: 0; justify-content: flex-start; flex-wrap: nowrap; }
+.camera-workspace.is-expanded .play-mode-toolbar-copy { display: none; }
+.camera-workspace.is-expanded .play-mode-toolbar > .ui-button { margin-left: 0; }
+.camera-workspace.is-expanded .camera-feed-meta { top: 60px; }
+.camera-settings { margin-top: 16px; padding: 16px 20px; }
+.camera-settings > summary { display: flex; align-items: center; }
+.practice-layout.is-camera-mode { grid-template-rows: auto 1fr auto; }
+.practice-layout.is-camera-mode .play-mode-stage { height: auto; }
+.practice-page:has(.camera-workspace.is-expanded) > .site-header,
+.practice-page:has(.camera-workspace.is-expanded) .practice-heading { display: none; }
+.practice-page:has(.camera-workspace.is-expanded) .practice-main { padding-top: 16px; width: calc(100% - 40px); max-width: 1600px; }
+@keyframes camera-reveal { from { opacity: 0; transform: translateY(8px) scale(.985); } to { opacity: 1; transform: none; } }
+@media (max-width: 1023px) {
+  .practice-layout.is-camera-mode { grid-template-areas: "playing" "current" "sidebar" "help"; grid-template-rows: auto; }
+  .camera-workspace.is-expanded .camera-stage { height: max(480px, calc(100svh - 32px)); min-height: 480px; }
+  .practice-page:has(.camera-workspace.is-expanded) .practice-main { width: calc(100% - 24px); }
+}
+@media (prefers-reduced-motion: reduce) { .camera-workspace.is-expanded .camera-stage { animation: none; } }
 @media (max-width: 359px) {
   .hero-copy h1 { font-size: 46px; }
   .hero-description { font-size: 14px; }
