@@ -4,13 +4,19 @@ import type { StringIndex } from "@/data/songs";
 export type CameraPoint = { x: number; y: number };
 
 export const LEFT_FRET_ZONE = {
-  minX: 0.04,
-  maxX: 0.46,
-  minY: 0.18,
-  maxY: 0.86,
+  minX: 0.08,
+  minY: 0.12,
+  maxY: 0.9,
   minFret: 0,
   maxFret: 6,
 } as const;
+
+export const FRET_TRAVEL = {
+  low: 0.3,
+  normal: 0.24,
+  high: 0.18,
+} as const;
+export type FretSensitivity = keyof typeof FRET_TRAVEL;
 
 export const RIGHT_PLUCK_ZONE = {
   minX: 0.5,
@@ -33,11 +39,11 @@ export const RIGHT_PINCH = {
 
 export const LEFT_PINCH = {
   fingerTips: [8, 12, 16] as const,
-  activateRatio: 0.32,
-  releaseRatio: 0.48,
-  ambiguityMargin: 0.08,
-  holdMs: 90,
-  releaseHoldMs: 70,
+  activateRatio: [0.46, 0.5, 0.53] as const,
+  releaseRatio: [0.62, 0.66, 0.69] as const,
+  ambiguityMargin: 0.035,
+  holdMs: 55,
+  releaseHoldMs: 110,
 } as const;
 
 export function smoothLandmark(previous: CameraPoint | null, next: CameraPoint, alpha = 0.34): CameraPoint {
@@ -60,6 +66,10 @@ function landmarkDistance(from: NormalizedLandmark, to: NormalizedLandmark) {
   return Math.hypot(from.x - to.x, from.y - to.y, (from.z ?? 0) - (to.z ?? 0));
 }
 
+function imageDistance(from: NormalizedLandmark, to: NormalizedLandmark) {
+  return Math.hypot(from.x - to.x, from.y - to.y);
+}
+
 /** A thumb-index pinch becomes one stable control point for the right hand. */
 export function detectRightPinchFocus(landmarks: NormalizedLandmark[], wasActive: boolean): CameraPoint | null {
   const palmScale = Math.max(0.0001, landmarkDistance(landmarks[5], landmarks[17]));
@@ -74,11 +84,16 @@ export function detectRightPinchFocus(landmarks: NormalizedLandmark[], wasActive
 }
 
 /** Index, middle and ring map directly to strings 1, 2 and 3. */
-export function detectPinchedString(landmarks: NormalizedLandmark[], lockedString: StringIndex | null): StringIndex | null {
-  const palmScale = Math.max(0.0001, landmarkDistance(landmarks[5], landmarks[17]));
-  const ratios = LEFT_PINCH.fingerTips.map((tip) => landmarkDistance(landmarks[4], landmarks[tip]) / palmScale);
+export function getLeftPinchRatios(landmarks: NormalizedLandmark[]): number[] {
+  // Use palm length as a backup when the hand turns edge-on to the camera.
+  const palmScale = Math.max(0.0001, imageDistance(landmarks[5], landmarks[17]), imageDistance(landmarks[0], landmarks[9]) * 0.8);
+  return LEFT_PINCH.fingerTips.map((tip) => imageDistance(landmarks[4], landmarks[tip]) / palmScale);
+}
 
-  if (lockedString !== null && ratios[lockedString] <= LEFT_PINCH.releaseRatio) {
+export function detectPinchedString(landmarks: NormalizedLandmark[], lockedString: StringIndex | null): StringIndex | null {
+  const ratios = getLeftPinchRatios(landmarks);
+
+  if (lockedString !== null && ratios[lockedString] <= LEFT_PINCH.releaseRatio[lockedString]) {
     return lockedString;
   }
 
@@ -87,28 +102,37 @@ export function detectPinchedString(landmarks: NormalizedLandmark[], lockedStrin
     .sort((a, b) => a.ratio - b.ratio);
   const closest = ordered[0];
   const second = ordered[1];
-  if (closest.ratio > LEFT_PINCH.activateRatio) return null;
+  if (closest.ratio > LEFT_PINCH.activateRatio[closest.string]) return null;
   if (second.ratio - closest.ratio < LEFT_PINCH.ambiguityMargin) return null;
   return closest.string;
 }
 
-export function detectFret(point: CameraPoint, currentFret: number | null): number | null {
+export function detectFret(
+  point: CameraPoint,
+  currentFret: number | null,
+  origin: number = LEFT_FRET_ZONE.minX,
+  travel: number = FRET_TRAVEL.normal,
+): number | null {
   const zone = LEFT_FRET_ZONE;
-  if (point.x < zone.minX || point.x > zone.maxX || point.y < zone.minY || point.y > zone.maxY) return null;
+  if (point.y < zone.minY || point.y > zone.maxY || point.x < -0.05 || point.x > 1.05) return null;
 
   const fretCount = zone.maxFret - zone.minFret + 1;
-  const cellWidth = (zone.maxX - zone.minX) / fretCount;
+  const cellWidth = travel / fretCount;
+
+  // Past the ends of the range, keep the nearest fret rather than losing the hand.
+  if (point.x < origin) return zone.minFret;
+  if (point.x >= origin + travel) return zone.maxFret;
 
   if (currentFret !== null) {
     const currentIndex = currentFret - zone.minFret;
-    const currentLeft = zone.minX + currentIndex * cellWidth;
-    const hysteresis = cellWidth * 0.22;
+    const currentLeft = origin + currentIndex * cellWidth;
+    const hysteresis = cellWidth * 0.18;
     if (point.x >= currentLeft - hysteresis && point.x <= currentLeft + cellWidth + hysteresis) {
       return currentFret;
     }
   }
 
-  const rawIndex = Math.floor((point.x - zone.minX) / cellWidth);
+  const rawIndex = Math.floor((point.x - origin) / cellWidth);
   const safeIndex = Math.max(0, Math.min(fretCount - 1, rawIndex));
   return zone.minFret + safeIndex;
 }

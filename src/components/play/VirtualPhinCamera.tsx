@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { CameraIcon, FlipIcon, HandIcon, ShieldIcon } from "@/components/icons";
 import { useCamera } from "@/hooks/useCamera";
 import { useHandTracking } from "@/hooks/useHandTracking";
@@ -8,6 +8,8 @@ import type { StringIndex } from "@/data/songs";
 import type { TrackedHand } from "@/lib/hand-tracking/types";
 import {
   LEFT_PINCH,
+  LEFT_FRET_ZONE,
+  FRET_TRAVEL,
   RIGHT_PLUCK_ZONE,
   averageLandmarks,
   detectFret,
@@ -15,8 +17,10 @@ import {
   detectPluck,
   detectRightPinchFocus,
   detectString,
+  getLeftPinchRatios,
   smoothLandmark,
   type CameraPoint,
+  type FretSensitivity,
 } from "@/lib/hand-tracking/virtualPhinInteraction";
 import { VirtualPhinInstrument } from "./VirtualPhinInstrument";
 
@@ -34,6 +38,7 @@ type Props = {
   onLiveChange?: (live: boolean) => void;
   standaloneMode?: boolean;
   className?: string;
+  modeSwitch?: ReactNode;
 };
 
 type PluckState = "idle" | "ready" | "pluck";
@@ -64,25 +69,37 @@ function findHandForSideZone(
     hand,
     x: projectToView(hand.landmarks[9], video, view, mirrored).x,
   }));
-  const isInZone = (x: number) => side === "Left" ? x < 0.5 : x > 0.5;
-  return candidates.find(({ hand, x }) => hand.side === side && isInZone(x))?.hand
-    ?? candidates.find(({ x }) => isInZone(x))?.hand;
+  if (candidates.length === 2) {
+    // Screen position remains stable when MediaPipe briefly flips hand labels.
+    const ordered = candidates.sort((a, b) => a.x - b.x);
+    return side === "Left" ? ordered[0].hand : ordered[1].hand;
+  }
+  const only = candidates[0];
+  if (!only) return undefined;
+  // A single hand belongs to one control only. An identified left hand may
+  // travel slightly past the center after calibrating fret zero.
+  const controlSide = only.x < 0.5 || (only.hand.side === "Left" && only.x < 0.72) ? "Left" : "Right";
+  return controlSide === side ? only.hand : undefined;
 }
 
-export function VirtualPhinCamera({ frets, activeString, expected, onSelectFret, onPluck, onUnlockAudio, defaultFacing = "user", onLiveChange, standaloneMode = false, className = "" }: Props) {
+export function VirtualPhinCamera({ frets, activeString, expected, onSelectFret, onPluck, onUnlockAudio, defaultFacing = "user", onLiveChange, standaloneMode = false, className = "", modeSwitch }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const camera = useCamera(videoRef);
   const mirrored = camera.facing === "user";
   const tracker = useHandTracking(videoRef, canvasRef, camera.phase === "ready", mirrored, "instrument");
   const isLive = camera.phase === "ready";
+  const isExpanded = isLive || camera.phase === "requesting";
   useEffect(() => { onLiveChange?.(isLive); }, [isLive, onLiveChange]);
-  const leftVisible = tracker.hands.some((hand) => hand.side === "Left") || tracker.hands.length === 2;
+  const [leftVisible, setLeftVisible] = useState(false);
   const rightVisible = tracker.hands.some((hand) => hand.side === "Right") || tracker.hands.length === 2;
 
   const [fretPreview, setFretPreview] = useState(0);
   const [leftFretActive, setLeftFretActive] = useState(false);
   const [leftFingerString, setLeftFingerString] = useState<StringIndex | null>(null);
+  const [leftHint, setLeftHint] = useState("วางมือซ้ายด้านซ้ายของภาพ");
+  const [fretSensitivity, setFretSensitivity] = useState<FretSensitivity>("normal");
+  const [fretOrigin, setFretOrigin] = useState<number>(LEFT_FRET_ZONE.minX);
   const [selectedString, setSelectedString] = useState<StringIndex | null>(null);
   const [rightPinching, setRightPinching] = useState(false);
   const [pluckState, setPluckState] = useState<PluckState>("idle");
@@ -92,6 +109,8 @@ export function VirtualPhinCamera({ frets, activeString, expected, onSelectFret,
   const leftLostAtRef = useRef(0);
   const leftZoneLostAtRef = useRef(0);
   const leftSmoothedRef = useRef<CameraPoint | null>(null);
+  const fretOriginRef = useRef<number>(LEFT_FRET_ZONE.minX);
+  const calibrationMessageRef = useRef<{ text: string; until: number } | null>(null);
   const leftFingerStringRef = useRef<StringIndex | null>(null);
   const leftFingerCandidateRef = useRef<StringIndex | null>(null);
   const leftFingerCandidateAtRef = useRef(0);
@@ -105,6 +124,40 @@ export function VirtualPhinCamera({ frets, activeString, expected, onSelectFret,
   const lastPluckAtRef = useRef(-Infinity);
   const pluckStateRef = useRef<PluckState>("idle");
   const pluckTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    const id = window.setTimeout(() => {
+      try {
+        const saved = window.localStorage.getItem("virtual-phin:fret-sensitivity");
+        if (saved === "low" || saved === "normal" || saved === "high") setFretSensitivity(saved);
+      } catch { /* Private browsing may block storage. */ }
+    }, 0);
+    return () => window.clearTimeout(id);
+  }, []);
+
+  const changeSensitivity = (value: FretSensitivity) => {
+    setFretSensitivity(value);
+    try { window.localStorage.setItem("virtual-phin:fret-sensitivity", value); } catch { /* Session setting still works. */ }
+  };
+
+  const calibrateFret = () => {
+    const palm = leftSmoothedRef.current;
+    const maxOrigin = Math.min(0.43, 0.71 - FRET_TRAVEL[fretSensitivity]);
+    if (!palm || palm.x < 0.02 || palm.x > maxOrigin) {
+      const text = "วางมือซ้ายให้ชิดซ้ายอีกนิดก่อนตั้งเฟรต 0";
+      calibrationMessageRef.current = { text, until: performance.now() + 1600 };
+      setLeftHint(text);
+      return;
+    }
+    fretOriginRef.current = palm.x;
+    setFretOrigin(palm.x);
+    fretPreviewRef.current = 0;
+    setFretPreview(0);
+    ([0, 1, 2] as StringIndex[]).forEach((string) => onSelectFret(string, 0));
+    const text = "ตั้งตำแหน่งนี้เป็นเฟรต 0 แล้ว";
+    calibrationMessageRef.current = { text, until: performance.now() + 1200 };
+    setLeftHint(text);
+  };
 
   const updatePluckState = (next: PluckState) => {
     if (pluckStateRef.current === next) return;
@@ -131,12 +184,17 @@ export function VirtualPhinCamera({ frets, activeString, expected, onSelectFret,
     const now = performance.now();
     if (!left) {
       if (!leftLostAtRef.current) leftLostAtRef.current = now;
-      leftSmoothedRef.current = null;
       leftZoneLostAtRef.current = 0;
-      if (now - leftLostAtRef.current > 220) resetLeftFretToOpenString();
+      if (now - leftLostAtRef.current > 550) {
+        leftSmoothedRef.current = null;
+        setLeftVisible(false);
+        setLeftHint("ไม่พบมือซ้ายในพื้นที่ควบคุม");
+        resetLeftFretToOpenString();
+      }
       return;
     }
     leftLostAtRef.current = 0;
+    setLeftVisible(true);
 
     const detectedFinger = detectPinchedString(left.landmarks, leftFingerStringRef.current);
     if (detectedFinger === null) {
@@ -193,14 +251,25 @@ export function VirtualPhinCamera({ frets, activeString, expected, onSelectFret,
     const smoothed = smoothLandmark(leftSmoothedRef.current, viewPoint, 0.24);
     leftSmoothedRef.current = smoothed;
 
-    const nextFret = detectFret(smoothed, fretPreviewRef.current);
+    const nextFret = detectFret(smoothed, fretPreviewRef.current, fretOriginRef.current, FRET_TRAVEL[fretSensitivity]);
     if (nextFret === null) {
       if (!leftZoneLostAtRef.current) leftZoneLostAtRef.current = now;
-      if (now - leftZoneLostAtRef.current > 140) resetLeftFretToOpenString();
+      setLeftHint("พบมือแล้ว · ย้ายมือเข้าระดับกลางภาพ");
+      if (now - leftZoneLostAtRef.current > 450) resetLeftFretToOpenString();
       return;
     }
 
     leftZoneLostAtRef.current = 0;
+    if (calibrationMessageRef.current && now < calibrationMessageRef.current.until) {
+      setLeftHint(calibrationMessageRef.current.text);
+    } else if (leftFingerStringRef.current !== null) {
+      setLeftHint(`ยืนยันนิ้วสาย ${leftFingerStringRef.current + 1} แล้ว`);
+    } else if (leftFingerCandidateRef.current !== null) {
+      setLeftHint(`กำลังยืนยันนิ้วสาย ${leftFingerCandidateRef.current + 1}`);
+    } else {
+      const closestRatio = Math.min(...getLeftPinchRatios(left.landmarks));
+      setLeftHint(`เล็งเฟรต ${nextFret} · รอจีบ (ระยะนิ้ว ${closestRatio.toFixed(2)})`);
+    }
     if (!leftFretActiveRef.current) {
       leftFretActiveRef.current = true;
       setLeftFretActive(true);
@@ -211,7 +280,7 @@ export function VirtualPhinCamera({ frets, activeString, expected, onSelectFret,
       const pressedString = leftFingerStringRef.current;
       ([0, 1, 2] as StringIndex[]).forEach((string) => onSelectFret(string, string === pressedString ? nextFret : 0));
     }
-  }, [mirrored, onPluck, onSelectFret, resetLeftFretToOpenString, tracker.hands]);
+  }, [fretSensitivity, mirrored, onPluck, onSelectFret, resetLeftFretToOpenString, tracker.hands]);
 
   useEffect(() => {
     const right = findHandForSideZone(tracker.hands, "Right", videoRef.current, canvasRef.current, mirrored);
@@ -292,6 +361,13 @@ export function VirtualPhinCamera({ frets, activeString, expected, onSelectFret,
 
   useEffect(() => {
     leftSmoothedRef.current = null;
+    calibrationMessageRef.current = null;
+    fretOriginRef.current = LEFT_FRET_ZONE.minX;
+    queueMicrotask(() => {
+      setFretOrigin(LEFT_FRET_ZONE.minX);
+      setLeftVisible(false);
+      setLeftHint("วางมือซ้ายด้านซ้ายของภาพ");
+    });
     leftLostAtRef.current = 0;
     leftZoneLostAtRef.current = 0;
     leftFretActiveRef.current = false;
@@ -328,15 +404,19 @@ export function VirtualPhinCamera({ frets, activeString, expected, onSelectFret,
     : undefined;
 
   return (
-    <section className={`ui-panel camera-panel ${className}`}>
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-lg font-semibold">เล่นด้วยกล้อง</h2><p className="text-sm text-slate-600">{standaloneMode ? "AR ควบคุมด้วยมือจริง · ประมวลผลบนเครื่อง" : "ทางเลือกเสริม · ใช้ปุ่มด้านบนได้เสมอ"}</p></div>
+    <div className={`camera-workspace ${isExpanded ? "is-expanded" : ""} ${className}`}>
+      <div className="play-mode-toolbar">
+        {modeSwitch}
+        <div className="play-mode-toolbar-copy"><h2>เล่นด้วยกล้อง</h2><p>{standaloneMode ? "AR ควบคุมด้วยมือจริง · ประมวลผลบนเครื่อง" : "ทางเลือกเสริม · ใช้ปุ่มด้านบนได้เสมอ"}</p></div>
         <button type="button" onClick={isLive || camera.phase === "requesting" ? camera.stop : startCamera} className="ui-button"><CameraIcon className="size-4" />{camera.phase === "requesting" ? "ยกเลิกการเปิดกล้อง" : isLive ? "หยุดกล้อง" : "เปิดกล้อง"}</button>
       </div>
+    <section className="ui-panel camera-panel">
       <p role="status" className="mb-3 text-sm text-slate-700">{camera.phase === "requesting" ? "กำลังขออนุญาตใช้กล้องจากเบราว์เซอร์…" : isLive && (tracker.phase === "loading" || tracker.phase === "idle") ? "กำลังโหลดระบบตรวจจับมือ… ครั้งแรกอาจใช้เวลาสักครู่" : isLive && tracker.phase === "tracking" ? "กล้องพร้อม · วางมือทั้งสองให้เห็นในภาพ" : "ไม่บันทึกหรือส่งภาพกล้องขึ้นเซิร์ฟเวอร์"}</p>
       {(camera.error || (isLive && tracker.error)) && <p role="alert" className="mb-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-900">{camera.error ?? tracker.error} · {standaloneMode ? "สลับกลับไปโหมดแตะโน้ตได้" : "ใช้ปุ่มดีดสายด้านบนต่อได้"}</p>}
-      <div className={`camera-stage relative min-w-0 overflow-hidden rounded-2xl bg-[#1d1d1f] ${isLive ? "h-[min(60svh,420px)] min-h-[280px] sm:h-[500px]" : "hidden"}`}>
+      <div className="camera-stage relative min-w-0 overflow-hidden rounded-2xl bg-[#1d1d1f]">
       <video ref={videoRef} muted playsInline className={`absolute inset-0 size-full object-cover transition-opacity duration-300 ${mirrored ? "scale-x-[-1]" : "scale-x-100"} ${isLive ? "opacity-100" : "opacity-0"}`} />
       <canvas ref={canvasRef} aria-label="จุดติดตามมือสำหรับเล่นพิณ" className="pointer-events-none absolute inset-0 z-20 size-full" />
+      {camera.phase === "requesting" && <div className="camera-loading absolute inset-0 z-10 grid place-items-center text-sm text-white">กำลังเปิดกล้อง…</div>}
       {!isLive && <div className="studio-grid absolute inset-0 opacity-30" />}
 
       <div className="absolute inset-x-0 top-0 z-30 flex items-center justify-between p-4">
@@ -355,11 +435,12 @@ export function VirtualPhinCamera({ frets, activeString, expected, onSelectFret,
             <div className="rounded-xl border border-white/25 bg-black/85 px-2 py-2 shadow-sm">
               <p className="text-xs text-white">มือซ้าย · {leftVisible ? "พบมือ" : "ไม่พบมือ"}</p>
               <p className="mt-1 text-xs font-semibold">{leftFretActive ? leftFingerString === null ? `เฟรต ${fretPreview} · รอจีบ` : `สาย ${leftFingerString + 1} · เฟรต ${fretPreview}` : "เฟรต 0 · สายเปล่า"}</p>
+              <p className="mt-1 text-[11px] text-white/80">{leftHint}</p>
             </div>
           </div>
 
-          <div aria-hidden="true" className="absolute left-3 top-[43%] hidden h-9 w-[43%] grid-cols-7 rounded-xl border border-white/20 bg-black/85 p-1 sm:grid">
-            {FRET_LABELS.map((fret) => <div key={fret} className="grid place-items-center"><span className={`grid size-6 place-items-center rounded-full text-xs font-semibold transition ${fretPreview === fret ? "bg-[#e5aa5f] text-[#3b250f]" : "text-white"}`}>{fret}</span></div>)}
+          <div aria-hidden="true" className="absolute top-[43%] hidden h-9 grid-cols-7 rounded-xl border border-white/20 bg-black/85 p-1 sm:grid" style={{ left: `${fretOrigin * 100}%`, width: `${FRET_TRAVEL[fretSensitivity] * 100}%` }}>
+            {FRET_LABELS.map((fret) => <div key={fret} className="grid place-items-center"><span className={`grid size-4 place-items-center rounded-full text-[10px] font-semibold transition ${fretPreview === fret ? "bg-[#e5aa5f] text-[#3b250f]" : "text-white"}`}>{fret}</span></div>)}
           </div>
 
           <div className={`absolute right-3 top-[23%] max-w-[44%] rounded-xl border px-2 py-2 text-right shadow-sm ${pluckState === "pluck" ? "border-[#ffd393] bg-[#74451f]" : rightPinching ? "border-[#a8ddb5] bg-[#315c3d]" : "border-white/25 bg-black/85"}`}>
@@ -380,7 +461,16 @@ export function VirtualPhinCamera({ frets, activeString, expected, onSelectFret,
 
       <div className="absolute bottom-3 left-3 z-30 rounded-full bg-black/85 px-3 py-1 text-xs text-white"><span className="inline-flex items-center gap-1"><ShieldIcon className="size-3" />ประมวลผลบนเครื่อง</span></div>
     </div>
-    <details className="mt-3 text-sm leading-6 text-slate-700"><summary className="min-h-11 cursor-pointer font-semibold">วิธีควบคุมด้วยมือ</summary><ul className="mt-2 list-disc space-y-2 pl-5"><li>ข้อมือซ้ายเลื่อนซ้าย–ขวาเพื่อเลือกเฟรต 0–6</li><li>จีบโป้งกับนิ้วชี้/กลาง/นางซ้าย เพื่อเล่นสาย 1/2/3 โดยอัตโนมัติ</li><li>ปล่อยนิ้วชี้ซ้ายจะเล่นสาย 1 เฟรต 0; ปล่อยนิ้วกลาง/นางไม่มีเสียง</li><li>มือขวาจีบโป้งกับนิ้วชี้ค้าง แล้วลากผ่านสายที่ต้องการ</li><li>หากไม่จับเฟรตด้วยมือซ้าย จะเป็นสายเปล่า</li></ul></details>
+    <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-slate-700">
+      <label htmlFor="fret-sensitivity" className="font-semibold">ความไวเฟรต</label>
+      <select id="fret-sensitivity" value={fretSensitivity} onChange={(event) => changeSensitivity(event.target.value as FretSensitivity)} className="min-h-11 rounded-lg border border-slate-300 bg-white px-3">
+        <option value="low">ต่ำ · เลื่อนกว้าง</option><option value="normal">ปกติ</option><option value="high">สูง · เลื่อนสั้น</option>
+      </select>
+      <button type="button" disabled={!isLive || !leftVisible} onClick={calibrateFret} className="min-h-11 rounded-lg border border-slate-300 bg-white px-3 font-semibold disabled:cursor-not-allowed disabled:opacity-50">ตั้งตำแหน่งนี้เป็นเฟรต 0</button>
+      <span className="text-xs text-slate-600">วางมือซ้ายใกล้จุดเริ่มก่อนกด แล้วเลื่อนไปทางขวา</span>
+    </div>
+    <details className="mt-3 text-sm leading-6 text-slate-700"><summary className="min-h-11 cursor-pointer font-semibold">วิธีควบคุมด้วยมือ</summary><ul className="mt-2 list-disc space-y-2 pl-5"><li>วางมือซ้ายด้านซ้ายของภาพ กดตั้งเฟรต 0 แล้วเลื่อนไปทางขวาเพื่อเลือกเฟรต 0–6</li><li>จีบโป้งกับนิ้วชี้/กลาง/นางซ้าย เพื่อเล่นสาย 1/2/3 โดยอัตโนมัติ</li><li>ปล่อยนิ้วชี้ซ้ายจะเล่นสาย 1 เฟรต 0; ปล่อยนิ้วกลาง/นางไม่มีเสียง</li><li>มือขวาจีบโป้งกับนิ้วชี้ค้าง แล้วลากผ่านสายที่ต้องการ</li><li>หากไม่จับเฟรตด้วยมือซ้าย จะเป็นสายเปล่า</li></ul></details>
     </section>
+    </div>
   );
 }

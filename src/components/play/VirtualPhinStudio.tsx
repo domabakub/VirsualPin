@@ -189,6 +189,11 @@ export function VirtualPhinStudio({ song, freePlay = false, backHref, backLabel,
     if (activeTimer.current) window.clearTimeout(activeTimer.current);
   }, []);
 
+  const modeSwitch = inputMode && <button type="button" className="play-mode-switch" onClick={() => setInputMode(inputMode === "touch" ? "ar" : "touch")}>
+    {inputMode === "touch" ? <CameraIcon /> : <HandIcon />}
+    <span>สลับเป็น {inputMode === "touch" ? "AR" : "Touch"}</span>
+  </button>;
+
   return (
     <div className="practice-page">
       <AppHeader studio studioBackHref={backHref} studioBackLabel={backLabel} />
@@ -197,7 +202,7 @@ export function VirtualPhinStudio({ song, freePlay = false, backHref, backLabel,
           <h1>{freePlay ? "เล่นพิณอิสระ" : song.title}</h1>
           <span className="practice-badge">{freePlay ? "FREE PLAY · ไม่เก็บคะแนน" : practiceSource === "take" ? "PRACTICE · จากบันทึกของฉัน" : "PRACTICE · แบบฝึกตัวอย่าง"}</span>
         </div>
-        {inputMode === null ? <InputModeGateway onSelect={setInputMode} /> : <div className="practice-layout">
+        {inputMode === null ? <InputModeGateway onSelect={setInputMode} /> : <div className={`practice-layout ${inputMode === "ar" ? "is-camera-mode" : ""}`}>
           <section className="ui-panel current-note-panel practice-current" aria-label={freePlay ? "โน้ตที่เล่นล่าสุด" : "โน้ตปัจจุบัน"}>
             <div className="current-note-top">
               <div>
@@ -217,15 +222,11 @@ export function VirtualPhinStudio({ song, freePlay = false, backHref, backLabel,
           </section>
           <section aria-label="พื้นที่เล่นพิณ" className="practice-playing">
             <div className="play-mode-stage">
-              <button type="button" className="play-mode-switch" onClick={() => setInputMode(inputMode === "touch" ? "ar" : "touch")}>
-                {inputMode === "touch" ? <CameraIcon /> : <HandIcon />}
-                <span>สลับเป็น {inputMode === "touch" ? "AR" : "Touch"}</span>
-              </button>
-              {inputMode === "touch" ? <div className="ui-panel touch-panel">
+              {inputMode === "touch" ? <><div className="play-mode-toolbar">{modeSwitch}<div className="play-mode-toolbar-copy"><h2>เล่นด้วย Touch</h2><p>แตะโน้ตบนหน้าจอเพื่อเล่นทันที</p></div></div><div className="ui-panel touch-panel">
                 <TouchPhinControls frets={frets} activeString={activeString} expected={practicing ? expected : undefined} onSelectFret={selectFret} onPluck={pluckTouch} />
                 <p role="status" aria-atomic="true" className="mt-3 min-h-12 text-sm leading-6 text-slate-700">{feedback || (freePlay ? "แตะโน้ตตำแหน่งใดก็ได้บนคอพิณ เสียงจะเล่นทันที" : complete ? "ฝึกครบแล้ว · ดูสรุปผลหรือเริ่มรอบใหม่ได้ด้านล่าง" : step > 0 || mistakes > 0 ? "พบผลฝึกเดิม · กดฝึกต่อเพื่อเล่นจากโน้ตที่ค้างไว้" : "กดเริ่มฝึก แล้วแตะโน้ตที่เรืองแสงบนคอพิณ")}</p>
                 {freePlay && lastNote && <p className="text-sm font-medium text-blue-800">{lastNote}</p>}
-              </div> : <VirtualPhinCamera frets={frets} activeString={activeString} expected={practicing ? expected : undefined} onSelectFret={selectFret} onPluck={pluckCamera} onUnlockAudio={() => { void unlock(); }} defaultFacing={preferences.facing} standaloneMode />}
+              </div></> : <VirtualPhinCamera frets={frets} activeString={activeString} expected={practicing ? expected : undefined} onSelectFret={selectFret} onPluck={pluckCamera} onUnlockAudio={() => { void unlock(); }} defaultFacing={preferences.facing} standaloneMode modeSwitch={modeSwitch} />}
             </div>
           </section>
           <aside aria-label="ผลการฝึกและเครื่องมือ" className="practice-sidebar">
@@ -256,13 +257,13 @@ export function VirtualPhinStudio({ song, freePlay = false, backHref, backLabel,
                 <div className="mt-3 flex flex-wrap gap-2"><button ref={cancelRef} type="button" className="ui-button" onClick={() => { setRestartPending(false); restartRef.current?.focus(); }}>เก็บผลเดิม</button><button type="button" className="ui-button ui-primary" onClick={resetPractice}>ยืนยันเริ่มใหม่</button></div>
               </div>}
             </section>}
+          </aside>
             <details className="ui-panel practice-help text-sm leading-6 text-slate-700">
               <summary className="min-h-11 cursor-pointer font-semibold text-[#102544]">วิธีเล่นและข้อมูลแบบฝึก</summary>
               {freePlay ? <ol className="mt-3 list-decimal space-y-2 pl-5"><li>เลือก “Touch” แล้วจิ้มตำแหน่งบนคอพิณเพื่อเล่นทันที</li><li>เลือก “AR” แล้วกดเปิดกล้องเมื่อต้องการใช้มือจริง</li><li>ใช้ปุ่มซ้ายบนของพื้นที่เล่นเพื่อสลับโหมด โน้ตจะต่อกันใน Take เดียว</li></ol> : <ol className="mt-3 list-decimal space-y-2 pl-5"><li>กดเริ่มฝึก แล้วแตะโน้ตที่เรืองแสงบนคอพิณตามลำดับ</li><li>ในโหมด AR ให้กดเปิดกล้องและเล่นสายกับเฟรตตามโน้ตปัจจุบัน</li><li>ใช้ปุ่มซ้ายบนของพื้นที่เล่นเพื่อสลับ Touch และ AR ได้ตลอด</li></ol>}
               <p className="mt-3">{preferences.shortcuts ? "ปุ่มลัดเปิดอยู่: 1 / 2 / 3 สำหรับดีดแต่ละสาย" : "เปิดปุ่มลัด 1 / 2 / 3 ได้ที่หน้าตั้งค่า"}</p>
               {!freePlay && practiceSource === "sample" && <p className="mt-3 rounded-xl bg-amber-50 p-3 text-amber-950">แบบฝึกนี้ใช้ทดสอบระบบ ยังไม่ใช่ทำนองต้นฉบับที่ตรวจสอบแล้ว ใช้การตั้งสาย E4 / A3 / E3</p>}
             </details>
-          </aside>
         </div>}
       </main>
     </div>
