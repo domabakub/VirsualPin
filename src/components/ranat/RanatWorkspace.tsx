@@ -7,6 +7,7 @@ import { useRanat } from "@/instruments/ranat/useRanat";
 import { RanatPlayStage } from "./RanatPlayStage";
 import { renderRanatWave } from "@/instruments/ranat/export";
 const RanatCamera = dynamic(() => import("./RanatCamera").then(m => m.RanatCamera), { ssr: false, loading: () => <div className="rn-camera-loading">กำลังเตรียมโหมดกล้อง…</div> });
+const RanatArCamera = dynamic(() => import("./RanatArCamera").then(m => m.RanatArCamera), { ssr: false, loading: () => <div className="rn-camera-loading">กำลังเตรียมโหมด AR…</div> });
 
 const demos = [0, 2, 4, 5, 4, 2, 1, 0, 2, 4, 6, 5, 4, 2, 1, 0];
 function downloadTake(take: RanatTake) {
@@ -17,7 +18,7 @@ export function RanatWorkspace() {
   const audio = useRanat();
   const { begin, release, endPattern } = audio;
   const [mode, setMode] = useState<Articulation>("direct"), [offset, setOffset] = useState(7);
-  const [input, setInput] = useState<"touch" | "camera">("touch");
+  const [input, setInput] = useState<"touch" | "camera" | "ar">("touch");
   const [cameraPause, setCameraPause] = useState(0);
   const [zoom, setZoom] = useState(false), [start, setStart] = useState(7), [help, setHelp] = useState(false);
   const [exporting, setExporting] = useState<string | null>(null), [exportError, setExportError] = useState("");
@@ -32,7 +33,7 @@ export function RanatWorkspace() {
     const down = (e: KeyboardEvent) => {
       if (e.isComposing || e.ctrlKey || e.altKey || e.metaKey || e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement || e.target instanceof HTMLTextAreaElement || (e.target instanceof HTMLElement && e.target.isContentEditable)) return;
       const index = ranatKeyboardIndex(e.code, e.key);
-      if (index < 0 || ((zoom || input === "camera") && index >= 8) || keyStart + index > maxBase || e.repeat || keys.current.has(e.code)) return;
+      if (index < 0 || ((zoom || input !== "touch") && index >= 8) || keyStart + index > maxBase || e.repeat || keys.current.has(e.code)) return;
       e.preventDefault(); keys.current.add(e.code); void begin(keyStart + index, mode, offset, e.code, "keyboard", index % 2 ? "R" : "L");
     };
     const up = (e: KeyboardEvent) => { if (keys.current.delete(e.code)) release(e.code); };
@@ -68,13 +69,13 @@ export function RanatWorkspace() {
     <main id="main-content" className="rn-main" tabIndex={-1}>
       <section className="rn-heading"><div><p className="eyebrow">THE NEXT CHAPTER OF THAI SOUND</p><h1>สองไม้.<span> หนึ่งทำนอง.</span></h1><p className="rn-intro">สัมผัสเสียงระนาดเอก เล่นอย่างอิสระ ในจังหวะของคุณ</p></div><button className="ui-button rn-demo" onClick={audio.playing ? audio.stop : demo}><span aria-hidden="true">{audio.playing ? "■" : "▷"}</span>{audio.playing ? "หยุดฟัง" : "ฟังตัวอย่าง"}</button></section>
       <section className="rn-stage" aria-label="พื้นที่เล่นระนาด">
-        <div className="rn-stage-top"><div><span className={`rn-dot ${audio.active ? "rn-dot-active" : ""}`}/><span>RANAT EK</span><span className="rn-small-tag">เสียงสังเคราะห์</span></div><div className="rn-input-switch" aria-label="วิธีเล่น"><button aria-pressed={input === "touch"} onClick={() => { reset(); setInput("touch"); }}>สัมผัส / คีย์บอร์ด</button><button aria-pressed={input === "camera"} onClick={() => { reset(); void audio.unlock(); setInput("camera"); }}>กล้อง <small>ทดลอง</small></button></div></div>
+        <div className="rn-stage-top"><div><span className={`rn-dot ${audio.active ? "rn-dot-active" : ""}`}/><span>RANAT EK</span><span className="rn-small-tag">เสียงสังเคราะห์</span></div><div className="rn-input-switch" aria-label="วิธีเล่น"><button aria-pressed={input === "touch"} onClick={() => { reset(); setInput("touch"); }}>สัมผัส / คีย์บอร์ด</button><button aria-pressed={input === "camera"} onClick={() => { reset(); void audio.unlock(); setInput("camera"); }}>กล้อง <small>ทดลอง</small></button><button aria-pressed={input === "ar"} onClick={() => { reset(); void audio.unlock(); setInput("ar"); }}>AR <small>ทดลอง</small></button></div></div>
         <div className="rn-stage-caption"><p>{audio.active ? "ปล่อยมือ ให้เสียงค่อย ๆ จาง" : mode === "direct" ? "เริ่มต้นด้วยเสียงแรกของคุณ" : modeInfo.description}</p><span>{paired ? `คู่ ${offset + 1} · ระบบช่วยวางไม้ที่สอง` : "21 ลูกระนาด · 3 ช่วงเสียง"}</span></div>
-        {input === "camera" ? <RanatCamera mode={mode} offset={offset} rangeStart={keyStart} hits={audio.hits} suspended={audio.playing} pauseToken={cameraPause} onBegin={audio.begin} onRelease={audio.release} onStop={audio.endPattern} onUnlock={audio.unlock} onTouch={trigger}/> : <RanatPlayStage hits={audio.hits} onDown={trigger} onUp={audio.release} disabledFrom={maxBase + 1} range={zoom ? [keyStart, Math.min(keyStart + 7, 20)] : [0, 20]}/>}
-        <div className="rn-stage-bottom"><div className="rn-hands"><span><i className="rn-left"/>ไม้ซ้าย</span><span><i className="rn-right"/>ไม้ขวา</span></div><div className="rn-range"><button disabled={input === "camera"} aria-pressed={zoom} onClick={() => { reset(); setZoom(!zoom); }}>{zoom ? "ดูเต็มราง" : "เล่น 8 ลูก"}</button><label>ช่วงเสียง<select aria-label="ช่วงเสียงคีย์บอร์ดและพื้นที่ขยาย" value={start} onChange={e => { reset(); setStart(Number(e.target.value)); }}><option value="0">ต่ำ</option><option value="7">กลาง</option><option value="13">สูง</option></select></label></div></div>
+        {input === "ar" ? <RanatArCamera mode={mode} offset={offset} rangeStart={keyStart} hits={audio.hits} suspended={audio.playing} pauseToken={cameraPause} onBegin={audio.begin} onRelease={audio.release} onStop={audio.endPattern} onUnlock={audio.unlock} onTouch={trigger}/> : input === "camera" ? <RanatCamera mode={mode} offset={offset} rangeStart={keyStart} hits={audio.hits} suspended={audio.playing} pauseToken={cameraPause} onBegin={audio.begin} onRelease={audio.release} onStop={audio.endPattern} onUnlock={audio.unlock} onTouch={trigger}/> : <RanatPlayStage hits={audio.hits} onDown={trigger} onUp={audio.release} disabledFrom={maxBase + 1} range={zoom ? [keyStart, Math.min(keyStart + 7, 20)] : [0, 20]}/>}
+        <div className="rn-stage-bottom"><div className="rn-hands"><span><i className="rn-left"/>ไม้ซ้าย</span><span><i className="rn-right"/>ไม้ขวา</span></div><div className="rn-range"><button disabled={input !== "touch"} aria-pressed={zoom} onClick={() => { reset(); setZoom(!zoom); }}>{zoom ? "ดูเต็มราง" : "เล่น 8 ลูก"}</button><label>ช่วงเสียง<select aria-label="ช่วงเสียงคีย์บอร์ดและพื้นที่ขยาย" value={start} onChange={e => { reset(); setStart(Number(e.target.value)); }}><option value="0">ต่ำ</option><option value="7">กลาง</option><option value="13">สูง</option></select></label></div></div>
         <div className="rn-keyboard-guide" aria-label="ปุ่มคีย์บอร์ดตามช่วงเสียง"><p>แตะปุ่มเลขด้านล่าง หรือกดเลข 1–0 บนคีย์บอร์ด · ใช้ A S D F G H J K L ; ได้ด้วย</p><div className="rn-keyboard-map">{Array.from(NUMBER_KEYS, (key, i) => {
           const bar = keyStart + i;
-          const enabled = bar <= maxBase && (!(zoom || input === "camera") || i < 8);
+          const enabled = bar <= maxBase && (!(zoom || input !== "touch") || i < 8);
           return <button key={key} type="button" disabled={!enabled} aria-label={`ปุ่ม ${key}: ${enabled ? `${bars[bar].label} ลูก ${bar + 1}` : "ไม่ใช้ในช่วงนี้"}`}
             onPointerDown={e => { e.preventDefault(); e.currentTarget.setPointerCapture(e.pointerId); trigger(bar, `number-pointer-${e.pointerId}`); }}
             onPointerUp={e => release(`number-pointer-${e.pointerId}`)} onPointerCancel={e => release(`number-pointer-${e.pointerId}`)} onLostPointerCapture={e => release(`number-pointer-${e.pointerId}`)}

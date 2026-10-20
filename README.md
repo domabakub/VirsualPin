@@ -22,6 +22,8 @@
 - `/takes/[id]/practice` — ฝึกตามลำดับโน้ตจาก Quick Take
 - `/studio` — บันทึกพิณ 8 ห้อง แก้โน้ต ใส่ Drum Loop และ Export WAV/MIDI
 - `/settings` — หน้าตั้งค่าพื้นฐาน
+- `/instruments` — เลือกเครื่องดนตรี (Phin Next / Ranat Next)
+- `/instruments/ranat` และ `/instruments/ranat/play` — แนะนำและเล่นระนาดเอก (ทดลอง)
 
 ## Virtual Phin ที่ใช้งานได้
 
@@ -47,6 +49,16 @@
 - Auto-save โปรเจกต์ในเบราว์เซอร์ และ Export เป็น WAV หรือ MIDI
 
 ขั้นตอนเดโมและภาพหน้าจอ: [Studio Mode MVP](./docs/studio-mvp/README.md)
+
+## Ranat Next (ทดลอง)
+
+- ระนาดเอก 21 ลูก โมเดล 3D (สำรองเป็น SVG) เสียงสังเคราะห์ใน tuning ทดลอง ยังไม่ใช่เสียงระนาดจริง
+- เล่นด้วยสัมผัสหลายนิ้ว ปุ่มเลข 1–0 หรือ A–; ตีเอง / ตีคู่ / กรอช่วย / รัว, metronome, demo
+- โหมดกล้อง “เล่นด้วยมือ”: ยก–ลดมือหน้ากล้องเพื่อตี เล็งด้วยตำแหน่งมือ
+- โหมด **AR**: ระนาด 3D ซ้อนบนภาพกล้อง จัดตำแหน่ง/ขนาดได้ และตีลงที่ลูกที่เห็นในภาพ — [ออกแบบระบบ](./docs/ranat-ar/system-design.md)
+- บันทึก take ในเบราว์เซอร์ ฟังย้อนหลัง ส่งออก WAV/JSON และนำเข้า JSON
+
+แผนและเกณฑ์: [Implementation plan](./docs/ranat-next-implementation-plan.md) · [Hand play](./docs/ranat-hand-play/system-design.md)
 
 ## ความสามารถใน Milestone 1
 

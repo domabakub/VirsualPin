@@ -113,7 +113,7 @@ stateDiagram-v2
 
 ## Asset และภาพเคลื่อนไหว
 
-ต้นฉบับ: art/ranat/ranat-next.blend; ไฟล์เว็บ: public/models/ranat-next.glb
+ต้นฉบับปัจจุบัน: art/modern-thai-ranat/pitched-05; ไฟล์เว็บที่โหลด: public/models/ranat-modern-v6.glb (ดู public/models/README.md) — ข้อมูลขนาดด้านล่างเป็นของ ranat-next.glb รุ่นแรกซึ่งไม่ได้โหลดแล้ว
 
 - root: ranat_root; ลูก: bar_00…bar_20; ไม้: mallet_L/R มีจุดอ้างอิงอยู่ที่หัวไม้
 - ขอบทองและเส้นผูกลูกเป็น geometry; texture ลายไม้สร้างสำหรับโปรเจกต์และ packed ใน GLB
@@ -142,6 +142,8 @@ stateDiagram-v2
 3. เพิ่มตัวบอก target บนตัวลูกที่อ่านง่าย และปรับจังหวะภาพไม้คู่จากผลทดลองจริง
 4. เพิ่มโมเดลพิณโดยใช้ scene shell และ visual event แนวทางเดียวกัน แต่มี detector และ target string/fret ของพิณเอง
 5. พิจารณา surface AR หลังยืนยันอุปกรณ์และข้อกำหนด ไม่ทำให้ความสำเร็จของ hand-play ขึ้นกับ WebXR
+
+อัปเดต 20 ต.ค.: เพิ่มโหมด AR ซ้อนภาพกล้องแล้ว (ยังไม่ใช่ surface AR) — ดู [docs/ranat-ar/system-design.md](../ranat-ar/system-design.md)
 
 ## เอกสารเทคนิคที่ใช้
 

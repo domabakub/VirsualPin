@@ -4,14 +4,17 @@ import { Suspense, useEffect, useMemo, useRef } from "react";
 import { Canvas, useFrame, useLoader, useThree, type ThreeEvent } from "@react-three/fiber";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
-import { Box3, Group, Mesh, MeshStandardMaterial, OrthographicCamera, PMREMGenerator } from "three";
+import { Box3, Group, Mesh, MeshStandardMaterial, OrthographicCamera, PMREMGenerator, Vector3 } from "three";
 import type { MalletPose } from "@/instruments/ranat/handMallets";
+import type { ArPlacement, ScreenBar } from "@/instruments/ranat/ar";
 
 export type RanatHit = { bar: number; hand: "L" | "R"; stamp: number; id?: number };
 export type RanatSceneProps = {
   hits?: RanatHit[]; poses?: MalletPose[]; range?: [number, number]; disabledFrom?: number;
   cameraInput?: boolean; showcase?: boolean; reducedMotion?: boolean; active?: boolean;
   onDown?: (bar: number, owner: string) => void; onUp?: (owner: string) => void;
+  /** Camera-overlay (AR) framing: the active range is placed on the video and bar tops are reported in view coordinates. */
+  ar?: { placement: ArPlacement; onBars?: (bars: ScreenBar[]) => void };
 };
 const EMPTY_HITS: RanatHit[] = [], EMPTY_POSES: MalletPose[] = [];
 
@@ -34,9 +37,10 @@ function StudioLight() {
   return null;
 }
 
-function FitCamera({ showcase }: { showcase: boolean }) {
+function FitCamera({ showcase, ar }: { showcase: boolean; ar: boolean }) {
   const { camera, size, invalidate } = useThree();
   useEffect(() => {
+    if (ar) return; // AR framing is owned by the instrument, which knows where the bars are.
     const cam = camera as OrthographicCamera;
     cam.position.set(0, showcase ? 1 : 1.35, 1.9);
     cam.lookAt(0, .175, 0);
@@ -44,15 +48,17 @@ function FitCamera({ showcase }: { showcase: boolean }) {
     // eslint-disable-next-line react-hooks/immutability
     cam.zoom = Math.min(size.width / 1.62, size.height / (showcase ? .68 : .66));
     cam.updateProjectionMatrix(); invalidate();
-  }, [camera, size.width, size.height, showcase, invalidate]);
+  }, [camera, size.width, size.height, showcase, ar, invalidate]);
   return null;
 }
 
-function Instrument({ hits = EMPTY_HITS, poses = EMPTY_POSES, range = [0, 20], disabledFrom = 21, cameraInput = false, showcase = false, reducedMotion = false, active = true, onDown }: RanatSceneProps) {
-  const gltf = useLoader(GLTFLoader, "/models/ranat-modern-v5.glb");
+function Instrument({ hits = EMPTY_HITS, poses = EMPTY_POSES, range = [0, 20], disabledFrom = 21, cameraInput = false, showcase = false, reducedMotion = false, active = true, onDown, ar }: RanatSceneProps) {
+  const gltf = useLoader(GLTFLoader, "/models/ranat-modern-v6.glb");
   const group = useRef<Group>(null);
   const invalidate = useThree(s => s.invalidate);
-  const { scene, barNodes, restPositions, strikeHeights, mallets } = useMemo(() => {
+  const arKey = useRef(""), onBars = useRef(ar?.onBars);
+  useEffect(() => { onBars.current = ar?.onBars; }, [ar?.onBars]);
+  const { scene, barNodes, restPositions, strikeHeights, barCenters, mallets } = useMemo(() => {
     const scene = gltf.scene.clone(true);
     const barNodes = Array.from({ length: 21 }, (_, i) => {
       const mesh = scene.getObjectByName(`bar_${String(i).padStart(2, "0")}`) as Mesh;
@@ -67,12 +73,35 @@ function Instrument({ hits = EMPTY_HITS, poses = EMPTY_POSES, range = [0, 20], d
       return node;
     });
     return { scene, barNodes, restPositions: barNodes.map(node => node.position.clone()),
-      strikeHeights: barNodes.map(node => new Box3().setFromObject(node).max.y), mallets };
+      strikeHeights: barNodes.map(node => new Box3().setFromObject(node).max.y),
+      barCenters: barNodes.map(node => new Box3().setFromObject(node).getCenter(new Vector3())), mallets };
   }, [gltf]);
   useEffect(() => () => { barNodes.forEach(n => (n.material as MeshStandardMaterial).dispose()); }, [barNodes]);
-  useEffect(() => { invalidate(); }, [hits, poses, range, cameraInput, reducedMotion, active, invalidate]);
+  useEffect(() => { invalidate(); }, [hits, poses, range, cameraInput, reducedMotion, active, ar?.placement, invalidate]);
 
   useFrame((state, delta) => {
+    if (ar) {
+      // Frame the active bars on the video, then report where their tops landed on screen.
+      const { width, height } = state.size, p = ar.placement, cam = state.camera as OrthographicCamera;
+      const key = `${width}x${height}:${range[0]}-${range[1]}:${p.x}:${p.y}:${p.scale}`;
+      if (key !== arKey.current && width > 0 && height > 0) {
+        arKey.current = key;
+        const first = barCenters[range[0]], last = barCenters[range[1]];
+        const count = range[1] - range[0] + 1, focusX = (first.x + last.x) / 2;
+        const span = count > 1 ? (last.x - first.x) * count / (count - 1) : .07;
+        // Three cameras are mutable renderer resources, not React state.
+        cam.position.set(focusX, 1.35, 1.9);
+        cam.lookAt(focusX, .175, 0);
+        cam.zoom = width * p.scale / span;
+        cam.setViewOffset(width, height, -(p.x - .5) * width, -(p.y - .5) * height, width, height);
+        cam.updateProjectionMatrix(); cam.updateMatrixWorld();
+        const projected = barCenters.map((center, bar) => {
+          const v = new Vector3(center.x, strikeHeights[bar], center.z).project(cam);
+          return { bar, x: (v.x + 1) / 2, y: (1 - v.y) / 2 };
+        });
+        onBars.current?.(projected);
+      }
+    }
     if (!active) return;
     const now = performance.now(), count = range[1] - range[0] + 1;
     let moving = false;
@@ -141,7 +170,7 @@ export function RanatScene(props: RanatSceneProps) {
     <hemisphereLight args={["#fff7e7", "#657679", .45]} />
     <directionalLight position={[-2, 4, 3]} color="#fff0d8" intensity={2.3} />
     <directionalLight position={[2, 1, -1]} color="#e0efff" intensity={1.3} />
-    <FitCamera showcase={!!props.showcase} />
+    <FitCamera showcase={!!props.showcase} ar={!!props.ar} />
     <Suspense fallback={null}><Instrument {...props}/></Suspense>
   </Canvas>;
 }

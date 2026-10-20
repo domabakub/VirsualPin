@@ -6,7 +6,7 @@ const fs=require('node:fs');
     const context=await browser.newContext({viewport:{width:320,height:850},reducedMotion:'reduce'});
     const page=await context.newPage();
     await page.addInitScript(()=>{navigator.mediaDevices.getUserMedia=async()=>{throw new DOMException('Test denied','NotAllowedError');};});
-    await page.route('**/models/ranat-modern-v5.glb',route=>route.abort());
+    await page.route('**/models/ranat-modern-v6.glb',route=>route.abort());
     await page.goto('http://localhost:3000/instruments/ranat/play',{waitUntil:'networkidle'});
     await page.locator('.rn-flat-fallback svg').waitFor();
     await page.getByRole('button',{name:'อัดทำนอง',exact:true}).click();
