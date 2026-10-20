@@ -1,0 +1,34 @@
+{
+  "glb": {
+    "mesh_count": 147,
+    "keys": 21,
+    "materials": 5,
+    "textured_materials": 1,
+    "instrument_dimensions_mm": [
+      1396.28,
+      360.0,
+      350.0
+    ],
+    "bytes": 2845836,
+    "import_pass": true
+  },
+  "fbx": {
+    "mesh_count": 147,
+    "keys": 21,
+    "materials": 5,
+    "textured_materials": 1,
+    "instrument_dimensions_mm": [
+      1396.28,
+      360.0,
+      350.0
+    ],
+    "bytes": 2340636,
+    "import_pass": true
+  },
+  "blend": {
+    "scenes": [
+      "Modern Thai Ranat | reference study"
+    ],
+    "contains_only_current_scene": true
+  }
+}

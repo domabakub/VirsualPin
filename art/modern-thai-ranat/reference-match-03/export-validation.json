@@ -1,0 +1,35 @@
+{
+  "glb": {
+    "dimensions_mm": [
+      1400.993,
+      360.0,
+      348.905
+    ],
+    "instrument_meshes": 132,
+    "keys": 21,
+    "wood_texture_loaded": true,
+    "two_separate_mallets": true,
+    "import_pass": true,
+    "bytes": 9446832
+  },
+  "fbx": {
+    "dimensions_mm": [
+      1400.993,
+      360.0,
+      348.905
+    ],
+    "instrument_meshes": 132,
+    "keys": 21,
+    "wood_texture_loaded": true,
+    "two_separate_mallets": true,
+    "import_pass": true,
+    "bytes": 8303660
+  },
+  "blend": {
+    "scenes": [
+      "Ranat | reference match 03"
+    ],
+    "contains_only_current_scene": true,
+    "opened_source_file": true
+  }
+}

@@ -1,0 +1,64 @@
+{
+  "source_views": [
+    "Front View",
+    "Side View"
+  ],
+  "left_isometric_used": false,
+  "dimensions_mm": [
+    1398.3035888671875,
+    360.0,
+    349.0993347167969
+  ],
+  "landmark_errors": {
+    "front_outer_end": {
+      "max_mm": 1.435,
+      "mean_mm": 1.038,
+      "landmarks": 9
+    },
+    "front_inner_end": {
+      "max_mm": 1.436,
+      "mean_mm": 1.274,
+      "landmarks": 8
+    },
+    "side_outer_end": {
+      "max_mm": 0.206,
+      "mean_mm": 0.129,
+      "landmarks": 10
+    },
+    "side_wood": {
+      "max_mm": 0.033,
+      "mean_mm": 0.008,
+      "landmarks": 8
+    }
+  },
+  "mirrored_structure_error_mm": {
+    "O4 | Cup_Resonator_01": 0,
+    "O4 | Cup_Resonator_02": 0,
+    "O4 | Cup_Resonator_03": 0,
+    "O4 | Cup_Resonator_04": 0,
+    "O4 | Cup_Resonator_05": 0,
+    "O4 | Cup_Resonator_06": 0,
+    "O4 | Cup_Resonator_07": 0,
+    "O4 | Cup_Resonator_08": 0,
+    "O4 | Cup_Resonator_09": 0,
+    "O4 | Cup_Resonator_10": 0,
+    "O4 | Cup_Resonator_11": 0,
+    "O4 | Cup_Resonator_12": 0,
+    "O4 | Cup_Resonator_13": 0,
+    "O4 | Cup_Resonator_14": 0,
+    "O4 | Cup_Resonator_15": 0,
+    "O4 | Cup_Resonator_16": 0,
+    "O4 | Cup_Resonator_17": 0,
+    "O4 | Cup_Resonator_18": 0,
+    "O4 | Cup_Resonator_19": 0,
+    "O4 | Cup_Resonator_20": 0,
+    "O4 | Cup_Resonator_21": 0,
+    "O4 | Resonator_Shell": 0,
+    "O4 | End_Frame": 0.000181,
+    "O4 | End_Wood_Insert": 0,
+    "O4 | Contact_Shoe": 6e-05,
+    "O4 | Support_Frame": 3.1e-05,
+    "O4 | Support_Wood": 6.1e-05
+  },
+  "note": "Manual reference digitization. Reference X/Z and Y/Z axes calibrated separately to the labels; overlays show calibrated projections, not an unconstrained perspective image."
+}

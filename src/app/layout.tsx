@@ -13,7 +13,7 @@ const thai = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Virtual Phin | เรียนพิณไทยด้วย AI",
+  title: "Phin Next | เรียนพิณไทยด้วย AI",
   description: "แพลตฟอร์มเรียนรู้พิณไทยด้วย Computer Vision และ Augmented Reality",
 };
 

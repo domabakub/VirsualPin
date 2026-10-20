@@ -1,0 +1,15 @@
+{
+  "dimensions_mm": [
+    1400.9934663772583,
+    360.00001430511475,
+    348.90493750572205
+  ],
+  "target_mm": [
+    1400,
+    360,
+    350
+  ],
+  "keys": 21,
+  "all_scales_one": true,
+  "separate_mallet_assembly": true
+}

@@ -1,0 +1,39 @@
+{
+  "units": "meters",
+  "bounds": {
+    "x": [
+      -0.6981378197669983,
+      0.6981378197669983
+    ],
+    "y": [
+      -0.18000000715255737,
+      0.18000000715255737
+    ],
+    "z": [
+      0.0,
+      0.3499999940395355
+    ]
+  },
+  "dimensions_mm": {
+    "x": 1396.28,
+    "y": 360.0,
+    "z": 350.0
+  },
+  "keys": 21,
+  "origin": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "cameras": [
+    "Camera_Front_Isometric",
+    "Camera_Left_Isometric",
+    "Camera_Right_Isometric",
+    "Camera_Front",
+    "Camera_Side",
+    "Camera_Top"
+  ],
+  "hollow_continuous_resonator": true,
+  "individual_resonators": false,
+  "stage": "detailed"
+}

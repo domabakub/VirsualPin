@@ -1,0 +1,34 @@
+{
+  "glb": {
+    "dimensions_mm": [
+      1230.0,
+      414.942,
+      425.0
+    ],
+    "instrument_meshes": 135,
+    "keys": 21,
+    "wood_texture_loaded": true,
+    "two_separate_mallets": true,
+    "import_pass": true,
+    "bytes": 3254280
+  },
+  "fbx": {
+    "dimensions_mm": [
+      1230.0,
+      414.942,
+      425.0
+    ],
+    "instrument_meshes": 135,
+    "keys": 21,
+    "wood_texture_loaded": true,
+    "two_separate_mallets": true,
+    "import_pass": true,
+    "bytes": 2757372
+  },
+  "blend": {
+    "scenes": [
+      "Modern Thai Ranat | 1230 base"
+    ],
+    "contains_only_current_scene": true
+  }
+}

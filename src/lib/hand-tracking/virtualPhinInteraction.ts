@@ -137,19 +137,23 @@ export function detectFret(
   return zone.minFret + safeIndex;
 }
 
-export function detectString(point: CameraPoint, currentString: StringIndex | null): StringIndex | null {
+export function detectString(point: CameraPoint, currentString: StringIndex | null, stringY: readonly [number, number, number] = RIGHT_PLUCK_ZONE.stringY): StringIndex | null {
   const zone = RIGHT_PLUCK_ZONE;
   if (point.x < zone.minX || point.x > zone.maxX) return null;
+  const sorted = [...stringY].sort((a, b) => a - b);
+  const gap = Math.min(sorted[1] - sorted[0], sorted[2] - sorted[1]);
+  const releaseRadius = Math.min(zone.releaseRadius, gap * 0.65);
+  const acquireRadius = Math.min(zone.acquireRadius, gap / 2);
 
-  if (currentString !== null && Math.abs(point.y - zone.stringY[currentString]) <= zone.releaseRadius) {
+  if (currentString !== null && Math.abs(point.y - stringY[currentString]) <= releaseRadius) {
     return currentString;
   }
 
-  const nearest = zone.stringY.reduce((best, stringY, index) => (
-    Math.abs(point.y - stringY) < Math.abs(point.y - zone.stringY[best]) ? index : best
+  const nearest = stringY.reduce((best, lineY, index) => (
+    Math.abs(point.y - lineY) < Math.abs(point.y - stringY[best]) ? index : best
   ), 0) as StringIndex;
 
-  return Math.abs(point.y - zone.stringY[nearest]) <= zone.acquireRadius ? nearest : null;
+  return Math.abs(point.y - stringY[nearest]) <= acquireRadius ? nearest : null;
 }
 
 type PluckInput = {
@@ -158,9 +162,10 @@ type PluckInput = {
   elapsedMs: number;
   now: number;
   lastPluckAt: number;
+  stringY?: readonly [number, number, number];
 };
 
-export function detectPluck({ previous, current, elapsedMs, now, lastPluckAt }: PluckInput): StringIndex | null {
+export function detectPluck({ previous, current, elapsedMs, now, lastPluckAt, stringY = RIGHT_PLUCK_ZONE.stringY }: PluckInput): StringIndex | null {
   if (!previous || elapsedMs <= 0) return null;
   if (now - lastPluckAt < RIGHT_PLUCK_ZONE.cooldownMs) return null;
   if (
@@ -174,7 +179,7 @@ export function detectPluck({ previous, current, elapsedMs, now, lastPluckAt }: 
   const velocity = Math.abs(movement) / (elapsedMs / 1000);
   if (Math.abs(movement) < RIGHT_PLUCK_ZONE.minTravel || velocity < RIGHT_PLUCK_ZONE.minVelocity) return null;
 
-  const crossed = RIGHT_PLUCK_ZONE.stringY
+  const crossed = stringY
     .map((stringY, string) => ({
       string: string as StringIndex,
       stringY,

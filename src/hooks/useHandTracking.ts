@@ -20,6 +20,7 @@ export function useHandTracking(
   const [phase, setPhase] = useState<TrackerPhase>("idle");
   const [hands, setHands] = useState<TrackedHand[]>([]);
   const [fps, setFps] = useState(0);
+  const [frameTime, setFrameTime] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const smootherRef = useRef(new LandmarkSmoother());
   const mirroredRef = useRef(mirrored);
@@ -103,7 +104,15 @@ export function useHandTracking(
       if (landmarker && video && canvas && video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
         if (video.currentTime !== lastVideoTime) {
           lastVideoTime = video.currentTime;
-          const result = landmarker.detectForVideo(video, now);
+          let result;
+          try { result = landmarker.detectForVideo(video, now); }
+          catch (reason) {
+            console.error("Hand tracking interrupted", reason);
+            setHands([]); setFrameTime(now); setPhase("error");
+            setError("การจับมือหยุดทำงาน ปิดแล้วเปิดกล้องใหม่ หรือใช้สัมผัสแทน");
+            return;
+          }
+          if (result.landmarks.length === 0) smoother.reset();
           const nextHands: TrackedHand[] = result.landmarks.map((landmarks, index) => {
             const category = result.handedness[index]?.[0];
             const classifiedSide: HandSide = category?.categoryName === "Left" ? "Left" : "Right";
@@ -119,6 +128,7 @@ export function useHandTracking(
             };
           });
           setHands(nextHands);
+          setFrameTime(now);
           drawHands(canvas, video, nextHands, mirroredRef.current, drawingModeRef.current);
 
           frames += 1;
@@ -142,5 +152,5 @@ export function useHandTracking(
     };
   }, [active, canvasRef, videoRef]);
 
-  return { phase, hands, fps, error };
+  return { phase, hands, fps, error, frameTime };
 }

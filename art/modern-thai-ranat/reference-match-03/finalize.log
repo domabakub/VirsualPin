@@ -1,0 +1,317 @@
+00:01.187  blend            | Read blend: "S:\Hackaton\art\modern-thai-ranat\reference-match-03\modern_thai_ranat_reference03.blend"
+00:01.218  reports          | WARNING Library file, loading empty scene
+Blender 5.2.2 LTS (hash d13f752e3b9c built 2026-09-15 01:37:04)
+00:05.281  cycles           | WARNING HIPEW initialization failed: Error opening HIP dynamic library
+BlenderMCP addon registered
+{"dimensions_mm": [1400.9934663772583, 360.00001430511475, 348.90493750572205], "target_mm": [1400, 360, 350], "keys": 21, "all_scales_one": true, "separate_mallet_assembly": true}
+INFO Draco is available, use library at D:\Steam\steamapps\common\Blender\5.2\scripts\addons_core\io_scene_gltf2\bf_intern_draco_bridge.dll
+INFO MeshOptimizer is available, use library at D:\Steam\steamapps\common\Blender\5.2\scripts\addons_core\io_scene_gltf2\bf_intern_meshopt_bridge.dll
+16:15:25 | INFO: Starting glTF 2.0 export
+16:15:25 | INFO: Extracting primitive: Handle_L
+16:15:25 | INFO: Primitives created: 1
+16:15:25 | INFO: Extracting primitive: Head_Thread_L
+16:15:25 | INFO: Primitives created: 1
+16:15:25 | INFO: Extracting primitive: Head_Thread_L.001
+16:15:25 | INFO: Primitives created: 1
+16:15:25 | INFO: Extracting primitive: Head_Thread_L.002
+16:15:25 | INFO: Primitives created: 1
+16:15:25 | INFO: Extracting primitive: Padded_Head_L
+16:15:25 | INFO: Primitives created: 1
+16:15:25 | INFO: Extracting primitive: Small_Brass_Ring_L
+16:15:25 | INFO: Primitives created: 1
+16:15:25 | INFO: Extracting primitive: Handle_R
+16:15:25 | INFO: Primitives created: 1
+16:15:25 | INFO: Extracting primitive: Head_Thread_R
+16:15:25 | INFO: Primitives created: 1
+16:15:25 | INFO: Extracting primitive: Head_Thread_R.001
+16:15:25 | INFO: Primitives created: 1
+16:15:25 | INFO: Extracting primitive: Head_Thread_R.002
+16:15:25 | INFO: Primitives created: 1
+16:15:25 | INFO: Extracting primitive: Padded_Head_R
+16:15:25 | INFO: Primitives created: 1
+16:15:25 | INFO: Extracting primitive: Small_Brass_Ring_R
+16:15:25 | INFO: Primitives created: 1
+16:15:25 | INFO: Extracting primitive: D3 | Opening_Lip.004
+16:15:25 | INFO: Primitives created: 1
+16:15:25 | INFO: Extracting primitive: D3 | Opening_Lip.005
+16:15:25 | INFO: Primitives created: 1
+16:15:25 | INFO: Extracting primitive: D3 | Resonator_Outer.002
+16:15:26 | INFO: Primitives created: 2
+16:15:26 | INFO: Extracting primitive: D3 | Brass_Contact_-1.003
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | End_Frame_-1.003
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | End_Wood_Insert_-1.003
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Support_-1_1.003
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Support_-1_-1.003
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Support_Wood_-1_1.003
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Support_Wood_-1_-1.003
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Brass_Contact_1.003
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | End_Frame_1.003
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | End_Wood_Insert_1.003
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Support_1_1.003
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Support_1_-1.003
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Support_Wood_1_1.003
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Support_Wood_1_-1.003
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Key_01.001
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Key_02.001
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Key_03.001
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Key_04.001
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Key_05.001
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Key_06.001
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Key_07.001
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Key_08.001
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Key_09.001
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Key_10.001
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Key_11.001
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Key_12.001
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Key_13.001
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Key_14.001
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Key_15.001
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Key_16.001
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Key_17.001
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Key_18.001
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Key_19.001
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Key_20.001
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Key_21.001
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | End_Tie.004
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | End_Tie.005
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | End_Tie.006
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | End_Tie.007
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Back.001
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Front.001
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.084
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.085
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.086
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.087
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.088
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.089
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.090
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.091
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.092
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.093
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.094
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.095
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.096
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.097
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.098
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.099
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.100
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.101
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.102
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.103
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.104
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.105
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.106
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.107
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.108
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.109
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.110
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.111
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.112
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.113
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.114
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.115
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.116
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.117
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.118
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.119
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.120
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.121
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.122
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.123
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.124
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.125
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.126
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.127
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.128
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.129
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.130
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.131
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.132
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.133
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.134
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.135
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.136
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.137
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.138
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.139
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.140
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.141
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.142
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.143
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.144
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.145
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.146
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.147
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.148
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.149
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.150
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.151
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.152
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.153
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.154
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.155
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.156
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.157
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.158
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.159
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.160
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.161
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.162
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.163
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.164
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.165
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.166
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Rope_Knot.167
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Suspension_Pin.004
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Suspension_Pin.005
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Suspension_Pin.006
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Extracting primitive: D3 | Suspension_Pin.007
+16:15:26 | INFO: Primitives created: 1
+16:15:26 | INFO: Finished glTF 2.0 export in 0.9681191444396973 s
+
+
+FBX export starting... 'S:\\Hackaton\\art\\modern-thai-ranat\\reference-match-03\\modern_thai_ranat_reference03.fbx'
+export finished in 0.4959 sec.
+ASSETS_SAVED
+00:45.297  render           | Saved: 'S:\Hackaton\art\modern-thai-ranat\reference-match-03\cycles\Front_Isometric.png'
+RENDERED Front_Isometric
+01:11.000  render           | Saved: 'S:\Hackaton\art\modern-thai-ranat\reference-match-03\cycles\Left_Isometric.png'
+RENDERED Left_Isometric
+01:30.609  render           | Saved: 'S:\Hackaton\art\modern-thai-ranat\reference-match-03\cycles\Right_Isometric.png'
+RENDERED Right_Isometric
+01:39.437  render           | Saved: 'S:\Hackaton\art\modern-thai-ranat\reference-match-03\cycles\Front.png'
+RENDERED Front
+01:57.093  render           | Saved: 'S:\Hackaton\art\modern-thai-ranat\reference-match-03\cycles\Side.png'
+RENDERED Side
+COMPLETE
+BlenderMCP addon unregistered
+
+Blender quit

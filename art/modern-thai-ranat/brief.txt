@@ -1,0 +1,517 @@
+You are a senior 3D hard-surface/product modeling artist working in Blender.
+
+TASK
+Create a production-ready 3D model of the modern Thai Ranat shown in the attached reference image.
+
+IMPORTANT:
+The attached reference image is the PRIMARY VISUAL GROUND TRUTH.
+
+Do NOT redesign the instrument.
+Do NOT simplify the main silhouette.
+Do NOT add decorative elements that are not visible in the reference.
+The final model must match the reference as closely as possible in:
+- silhouette
+- proportions
+- curvature
+- materials
+- construction language
+- end-piece shape
+- leg shape
+- body profile
+- key arrangement
+- spacing
+- overall visual weight
+
+REFERENCE DIMENSIONS
+Use real-world metric scale.
+
+Overall approximate dimensions:
+- Length: 1400 mm
+- Overall height: 350 mm
+- Overall width: 360 mm
+
+Set Blender units to Metric / millimeters or meters with correct real-world scale.
+
+==================================================
+1. OVERALL DESIGN
+==================================================
+
+This is a MODERN LUXURY reinterpretation of a traditional Thai Ranat Ek.
+
+Design language:
+- elegant
+- minimal
+- contemporary
+- premium
+- smooth flowing surfaces
+- Thai-inspired silhouette without excessive ornamentation
+
+The object should NOT look like:
+- a coffin
+- a boat prop
+- fantasy furniture
+- a generic xylophone
+- a Chinese/Japanese instrument
+- overly ornamental traditional Thai furniture
+
+It must clearly read as a Thai Ranat.
+
+Use the reference image exactly for the overall design.
+
+==================================================
+2. MAIN BODY / RESONATOR TROUGH
+==================================================
+
+Create the long central resonator body as one continuous curved hollow trough.
+
+Silhouette:
+- long horizontal body
+- center section gently drops downward
+- both ends gradually rise upward
+- smooth symmetrical curvature
+- elegant and relatively thin visual profile
+
+Front/side wall:
+- ivory / warm white exterior
+- smooth continuous curved surface
+- subtle rounded/chamfered edges
+- no excessive panel lines
+
+The lower edge should form a smooth shallow arc.
+
+The upper opening follows the same upward-curving profile as the suspended wooden keys.
+
+IMPORTANT:
+The inside is a HOLLOW acoustic resonator cavity.
+
+Do NOT create individual metallic resonator balls beneath each key.
+There must be NO row of gold spheres.
+
+Interior should appear:
+- dark warm brown / dark wood
+- recessed
+- continuous cavity
+
+Model enough interior depth so that the hollow cavity is visible when viewed from above.
+
+==================================================
+3. END PIECES
+==================================================
+
+The two end structures are one of the most important visual features.
+
+Match the reference carefully.
+
+Each end should have a tall sculptural leaf/flame/teardrop-like shape.
+
+Front silhouette:
+- narrow near the top
+- flowing outward toward the middle
+- tapering back toward the base
+- elegant asymmetric-looking internal curve while remaining mirrored between left/right ends
+
+Outer frame:
+- ivory white
+- smooth sculpted profile
+- slightly thick rounded border
+
+Inner inset:
+- light natural wood
+- follows the same flowing leaf/flame shape
+
+Do NOT add traditional carved Thai ornament patterns.
+
+Keep the design minimal.
+
+The end pieces should transition naturally into:
+- the body
+- the lower support
+- the feet
+
+Use smooth curvature with good surface continuity.
+
+==================================================
+4. SUPPORT / LEGS
+==================================================
+
+Follow the reference exactly.
+
+There should NOT be four generic furniture legs.
+
+The support structure should feel integrated into the instrument.
+
+At each side/end:
+
+Create a sweeping curved support that grows from the tall end piece and bends inward under the resonator body.
+
+Shape:
+- thin elegant arch
+- flowing organic curve
+- wider near structural connection
+- taper toward the floor
+
+Use ivory white as the main material.
+
+Include a light wood inset following part of the inner support.
+
+At the lowest contact point, add a very subtle thin metallic warm-gold/brass accent.
+
+Gold should only be a SMALL accent.
+
+Do not make large gold decorations.
+
+==================================================
+5. WOODEN KEYS
+==================================================
+
+Create authentic suspended Ranat-style wooden bars.
+
+Target:
+21 wooden keys for a Ranat Ek style instrument.
+
+Arrange the bars along the curved suspended line shown in the reference.
+
+The whole key bed must form a smooth upward curve:
+- lowest in the center
+- gradually rising toward both ends
+
+Each key:
+- rectangular wooden bar
+- softly rounded corners
+- subtle bevel
+- realistic thickness
+- slightly organic handcrafted appearance
+- NOT perfectly sharp industrial blocks
+
+Material:
+light warm natural wood similar to the reference.
+
+Approximate visual tone:
+light teak / maple / pale golden-brown wood.
+
+Keep grain subtle and premium.
+
+Bars should gradually vary in dimensions according to their position.
+
+Make every key a separate object or a procedurally generated reusable object.
+
+Name clearly:
+Key_01
+Key_02
+...
+Key_21
+
+==================================================
+6. SUSPENSION ROPE
+==================================================
+
+The keys must be visibly suspended using rope/string like a real Thai Ranat.
+
+Create two continuous suspension cords running through / alongside the key set.
+
+Cord:
+- off-white / cream
+- small diameter
+- slightly textured
+- not pure bright white
+
+Include visible knots/connections similar to the reference.
+
+The rope should visually pass through the appropriate holes in each key.
+
+Do not glue the keys directly onto the resonator body.
+
+Leave a realistic gap between:
+- keys
+and
+- resonator opening.
+
+==================================================
+7. AUTHENTIC STRUCTURE
+==================================================
+
+Preserve believable Thai Ranat construction.
+
+Important:
+- keys are suspended
+- body below is a hollow acoustic trough
+- no metal resonator bowls
+- no gold balls under each key
+- no vibraphone-style resonator tubes
+- no marimba pipes
+
+The modern design applies primarily to the external body and support system.
+
+The acoustic logic should still read as a Ranat.
+
+==================================================
+8. MATERIALS
+==================================================
+
+Create clean PBR materials.
+
+MATERIAL A — Ivory Body
+Warm ivory / soft white.
+
+Suggested appearance:
+Base Color around:
+#EEE9DF
+or similar warm ivory.
+
+Roughness:
+0.25–0.4
+
+Very subtle satin finish.
+
+NOT glossy plastic.
+
+--------------------------------------------------
+
+MATERIAL B — Light Natural Wood
+
+Used for:
+- keys
+- end-piece inserts
+- support inserts
+
+Color:
+warm pale natural wood.
+
+Use subtle procedural wood grain.
+
+Keep grain scale realistic.
+
+Avoid orange/yellow oversaturation.
+
+--------------------------------------------------
+
+MATERIAL C — Interior Dark Wood
+
+Inside the resonator cavity.
+
+Dark warm brown.
+
+Low-to-medium roughness.
+
+This should provide contrast against the ivory body.
+
+--------------------------------------------------
+
+MATERIAL D — Small Brass Accent
+
+Only use on tiny trim/contact details.
+
+Warm muted champagne brass.
+
+Metallic:
+0.8–1.0
+
+Roughness:
+0.25–0.4
+
+DO NOT cover large surfaces in gold.
+
+==================================================
+9. MALLETS
+==================================================
+
+Create two matching Ranat mallets.
+
+Follow the reference:
+
+- thin light wood handle
+- round padded striking head
+- off-white/cream head
+- very small warm metallic ring detail
+
+Keep them as separate objects.
+
+Names:
+Mallet_L
+Mallet_R
+
+==================================================
+10. MODELING QUALITY
+==================================================
+
+Use clean topology.
+
+Prefer:
+- subdivision-friendly geometry
+- bevels where appropriate
+- smooth shading
+- Auto Smooth / weighted normals where useful
+
+Avoid:
+- unnecessary dense geometry
+- visible shading artifacts
+- razor sharp CG edges
+- intersecting meshes
+- floating geometry
+
+Primary silhouette must remain clean even at medium distance.
+
+Use modifiers non-destructively whenever practical.
+
+Recommended:
+Mirror
+Subdivision Surface
+Bevel
+Curve
+Array / Geometry Nodes if useful
+
+==================================================
+11. SYMMETRY
+==================================================
+
+The base instrument must be structurally symmetrical left-to-right.
+
+IMPORTANT:
+The previous concept had an incorrect LEFT ISOMETRIC interpretation.
+
+Do not generate separate inconsistent designs for different angles.
+
+Build ONE physically coherent 3D model.
+
+Every camera angle must show the exact same geometry.
+
+Use a mirrored construction for the major body/end structures.
+
+==================================================
+12. OBJECT ORGANIZATION
+==================================================
+
+Create a clean Blender hierarchy:
+
+Ranat_Master
+    Body
+        Resonator_Outer
+        Resonator_Inner
+    End_Left
+        End_Frame
+        End_Wood_Insert
+        Support
+    End_Right
+        End_Frame
+        End_Wood_Insert
+        Support
+    Keys
+        Key_01
+        ...
+        Key_21
+    Suspension
+        Rope_Front
+        Rope_Back
+    Mallets
+        Mallet_L
+        Mallet_R
+
+Use understandable names throughout.
+
+==================================================
+13. CAMERA CHECKS
+==================================================
+
+Create these cameras to verify the model against the reference:
+
+Camera_Front_Isometric
+Camera_Left_Isometric
+Camera_Right_Isometric
+Camera_Front
+Camera_Side
+Camera_Top
+
+Use approximately 70–85 mm focal length for product-style renders.
+
+Avoid strong wide-angle distortion.
+
+Render the three isometric views and compare them against the provided image.
+
+The LEFT ISOMETRIC and RIGHT ISOMETRIC must show the SAME model correctly from opposite sides.
+
+==================================================
+14. LIGHTING
+==================================================
+
+Create simple premium product visualization lighting.
+
+Use:
+- large soft key light
+- soft fill
+- gentle rim light
+- neutral warm-gray studio environment
+
+Soft shadows.
+
+No dramatic colored lighting.
+
+The render should resemble a high-end industrial design/CAD portfolio.
+
+==================================================
+15. FINAL VALIDATION
+==================================================
+
+Before considering the model finished, compare against the reference and verify:
+
+[ ] Overall 1400 × 360 × 350 mm proportion
+[ ] Same long curved silhouette
+[ ] Body center is low
+[ ] Ends rise vertically
+[ ] End pieces match the tall flowing leaf shape
+[ ] White outer frame
+[ ] Pale natural wood inserts
+[ ] Light natural wood keys
+[ ] Keys follow a continuous upward curve
+[ ] Rope suspension is visible
+[ ] Hollow resonator cavity exists
+[ ] No gold balls / individual resonators
+[ ] Supports match the flowing reference design
+[ ] Left and right geometry are coherent and mirrored
+[ ] Gold is used only as a subtle accent
+[ ] No excessive Thai ornament
+[ ] Model reads clearly as a modern Thai Ranat
+[ ] Three isometric renders visually match the reference
+
+==================================================
+16. DELIVERABLES
+==================================================
+
+Save:
+
+modern_thai_ranat.blend
+
+Also export:
+
+modern_thai_ranat.glb
+modern_thai_ranat.fbx
+
+Keep materials assigned correctly.
+
+Apply transforms before export where appropriate.
+
+Set the origin of Ranat_Master at:
+X = center of instrument
+Y = center
+Z = ground level
+
+==================================================
+MOST IMPORTANT RULE
+==================================================
+
+DO NOT creatively reinterpret the reference.
+
+When there is a conflict between your own design idea and the reference image:
+
+THE REFERENCE IMAGE ALWAYS WINS.
+
+Match its:
+- silhouette
+- end design
+- leg design
+- ivory + pale wood color scheme
+- overall proportions
+- minimalist premium aesthetic
+
+as closely as physically possible.
+
+First create the base model and render the Front Isometric, Left Isometric, and Right Isometric cameras for visual verification before adding unnecessary micro-detail.

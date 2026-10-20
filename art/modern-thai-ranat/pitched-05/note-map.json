@@ -1,0 +1,175 @@
+{
+  "player_side": "negative Y",
+  "pitch_increases_along": "+X",
+  "frequency_hz_assigned": false,
+  "keys": [
+    {
+      "object": "O5 | Key_01",
+      "pitch_rank": 1,
+      "thai_note": "ซ",
+      "octaves_above_first_sol": 0,
+      "length_mm": 360.0,
+      "x_mm": -600.0
+    },
+    {
+      "object": "O5 | Key_02",
+      "pitch_rank": 2,
+      "thai_note": "ล",
+      "octaves_above_first_sol": 0,
+      "length_mm": 355.5,
+      "x_mm": -540.0
+    },
+    {
+      "object": "O5 | Key_03",
+      "pitch_rank": 3,
+      "thai_note": "ท",
+      "octaves_above_first_sol": 0,
+      "length_mm": 351.0,
+      "x_mm": -480.0
+    },
+    {
+      "object": "O5 | Key_04",
+      "pitch_rank": 4,
+      "thai_note": "ด",
+      "octaves_above_first_sol": 0,
+      "length_mm": 346.5,
+      "x_mm": -420.0
+    },
+    {
+      "object": "O5 | Key_05",
+      "pitch_rank": 5,
+      "thai_note": "ร",
+      "octaves_above_first_sol": 0,
+      "length_mm": 342.0,
+      "x_mm": -360.0
+    },
+    {
+      "object": "O5 | Key_06",
+      "pitch_rank": 6,
+      "thai_note": "ม",
+      "octaves_above_first_sol": 0,
+      "length_mm": 337.5,
+      "x_mm": -300.0
+    },
+    {
+      "object": "O5 | Key_07",
+      "pitch_rank": 7,
+      "thai_note": "ฟ",
+      "octaves_above_first_sol": 0,
+      "length_mm": 333.0,
+      "x_mm": -240.0
+    },
+    {
+      "object": "O5 | Key_08",
+      "pitch_rank": 8,
+      "thai_note": "ซ",
+      "octaves_above_first_sol": 1,
+      "length_mm": 328.5,
+      "x_mm": -180.0
+    },
+    {
+      "object": "O5 | Key_09",
+      "pitch_rank": 9,
+      "thai_note": "ล",
+      "octaves_above_first_sol": 1,
+      "length_mm": 324.0,
+      "x_mm": -120.0
+    },
+    {
+      "object": "O5 | Key_10",
+      "pitch_rank": 10,
+      "thai_note": "ท",
+      "octaves_above_first_sol": 1,
+      "length_mm": 319.5,
+      "x_mm": -60.0
+    },
+    {
+      "object": "O5 | Key_11",
+      "pitch_rank": 11,
+      "thai_note": "ด",
+      "octaves_above_first_sol": 1,
+      "length_mm": 315.0,
+      "x_mm": 0.0
+    },
+    {
+      "object": "O5 | Key_12",
+      "pitch_rank": 12,
+      "thai_note": "ร",
+      "octaves_above_first_sol": 1,
+      "length_mm": 310.5,
+      "x_mm": 60.0
+    },
+    {
+      "object": "O5 | Key_13",
+      "pitch_rank": 13,
+      "thai_note": "ม",
+      "octaves_above_first_sol": 1,
+      "length_mm": 306.0,
+      "x_mm": 120.0
+    },
+    {
+      "object": "O5 | Key_14",
+      "pitch_rank": 14,
+      "thai_note": "ฟ",
+      "octaves_above_first_sol": 1,
+      "length_mm": 301.5,
+      "x_mm": 180.0
+    },
+    {
+      "object": "O5 | Key_15",
+      "pitch_rank": 15,
+      "thai_note": "ซ",
+      "octaves_above_first_sol": 2,
+      "length_mm": 297.0,
+      "x_mm": 240.0
+    },
+    {
+      "object": "O5 | Key_16",
+      "pitch_rank": 16,
+      "thai_note": "ล",
+      "octaves_above_first_sol": 2,
+      "length_mm": 292.5,
+      "x_mm": 300.0
+    },
+    {
+      "object": "O5 | Key_17",
+      "pitch_rank": 17,
+      "thai_note": "ท",
+      "octaves_above_first_sol": 2,
+      "length_mm": 288.0,
+      "x_mm": 360.0
+    },
+    {
+      "object": "O5 | Key_18",
+      "pitch_rank": 18,
+      "thai_note": "ด",
+      "octaves_above_first_sol": 2,
+      "length_mm": 283.5,
+      "x_mm": 420.0
+    },
+    {
+      "object": "O5 | Key_19",
+      "pitch_rank": 19,
+      "thai_note": "ร",
+      "octaves_above_first_sol": 2,
+      "length_mm": 279.0,
+      "x_mm": 480.0
+    },
+    {
+      "object": "O5 | Key_20",
+      "pitch_rank": 20,
+      "thai_note": "ม",
+      "octaves_above_first_sol": 2,
+      "length_mm": 274.5,
+      "x_mm": 540.0
+    },
+    {
+      "object": "O5 | Key_21",
+      "pitch_rank": 21,
+      "thai_note": "ฟ",
+      "octaves_above_first_sol": 2,
+      "length_mm": 270.0,
+      "x_mm": 600.0
+    }
+  ]
+}

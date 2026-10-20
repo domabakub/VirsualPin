@@ -1,0 +1,7 @@
+{
+  "modelLoadFailureFallback": true,
+  "fallbackRecordedNotes": 1,
+  "cameraDeniedMessage": true,
+  "mobile320Overflow": false,
+  "reducedMotion": true
+}

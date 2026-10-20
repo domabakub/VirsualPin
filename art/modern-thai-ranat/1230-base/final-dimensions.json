@@ -1,0 +1,57 @@
+{
+  "stage": "final",
+  "measurement": "All evaluated mesh vertices under Ranat_Master, no exclusions",
+  "dimensions_mm": [
+    1230.0,
+    414.942,
+    425.0
+  ],
+  "target_mm": [
+    1230,
+    415,
+    425
+  ],
+  "tolerance_mm": 5,
+  "all_scales_one": true,
+  "bounds_m": [
+    [
+      -0.6149999499320984,
+      -0.20747123658657074,
+      0.0
+    ],
+    [
+      0.6149999499320984,
+      0.20747123658657074,
+      0.42500001192092896
+    ]
+  ],
+  "origin": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "cavity_approx_litres": 30.26,
+  "system_parameters_mm": {
+    "body_length": 1160,
+    "body_outer_depth": 356,
+    "cavity_width": 332,
+    "wall_thickness": 12,
+    "centre_floor_z": 78,
+    "centre_rim_z": 167,
+    "centre_key_origin_z": 213,
+    "centre_key_underside_clearance": 37,
+    "key_pitch": 46.5,
+    "key_width": 44,
+    "key_lengths": [
+      370,
+      300
+    ],
+    "key_body_thickness": 18,
+    "end_height": 425,
+    "end_depth": 415,
+    "frame_core_thickness": 14,
+    "foot_depth": 98
+  },
+  "keys": 21,
+  "global_mesh_resize_used": false
+}

@@ -22,7 +22,7 @@ export function HomeDashboard() {
   const resume = songs.filter(song => records[song.slug]?.total === song.notes.length && records[song.slug]?.step > 0 && records[song.slug]?.step < song.notes.length).sort((a, b) => records[b.slug].updatedAt - records[a.slug].updatedAt)[0];
   return <div className="app-shell home-page">
     <AppHeader active="home" />
-    <div className="announcement">เครื่องดนตรีไทย ในพื้นที่ของคุณ <span aria-hidden="true">·</span> ไม่ต้องมีพิณ ก็เริ่มได้</div>
+    <div className="announcement">เครื่องดนตรีไทย ในพื้นที่ของคุณ <span aria-hidden="true">·</span> <Link href="/instruments" style={{ color: "var(--action)", fontWeight: 600 }}>พบ Ranat Next และเครื่องดนตรีในเครือ ↗</Link></div>
     <main id="main-content" tabIndex={-1}>
       <section className="home-hero page-width">
         <div className="hero-copy">

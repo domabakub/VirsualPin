@@ -1,8 +1,8 @@
 # Photograph sources
 
 These are downloaded visual assets for real phin instruments and the selected
-Sketchfab model. No generated images, background replacement, synthesized details,
-or AI upscaling are used. Assets are served locally; Next.js may resize/compress
+Sketchfab model. Original JPEGs are unchanged. Instrument picker PNG derivatives use AI background removal;
+derivatives may alter small details. Assets are served locally; Next.js may resize/compress
 them for delivery.
 
 ## phin-contemporary.jpg
@@ -42,3 +42,25 @@ if larger product photography is needed.
 - Downloaded: 2026-09-01
 - Used without visual modification as the click-to-load poster for the official
   Sketchfab embed. The model author and Sketchfab link remain visible beside it.
+
+## Instrument picker transparent cutouts (2026-10-02)
+
+- phin-cutout.png: AI background-removal derivative of phin-contemporary.jpg (Pinaŭo.jpg), photographer Respubliko de Gvapolando. Original license: CC0 1.0.
+- Source: https://commons.wikimedia.org/wiki/File:Pina%C5%ADo.jpg
+- ranat-met-original.jpg: Ranat Ek, Thai, late 19th century, The Metropolitan Museum of Art, accession 89.4.303. The Crosby Brown Collection of Musical Instruments, 1889. Historical black-and-white photograph.
+- Source: https://commons.wikimedia.org/wiki/File:Ranat_Ek_-_MET_89.4.303.jpg
+- Collection: https://www.metmuseum.org/art/collection/search/500931
+- Original: https://images.metmuseum.org/CRDImages/mi/original/MUS759A.jpg
+- Original license: CC0 1.0, explicitly stated on the Commons file page.
+- ranat-cutout.png: AI background-removal derivative of ranat-met-original.jpg, retaining monochrome appearance.
+- Edits: transparent background removal using imagegen. Original JPEGs retained. AI edits may alter small details; these derivatives are presentation assets, not conservation records.
+- License: https://creativecommons.org/publicdomain/zero/1.0/
+- Original photographs may be copied, modified and used commercially without permission. Source, license and modification credits are visible below the instrument cards.
+
+
+## Ranat color interpretation (2026-10-02)
+
+- ranat-color-cutout.png: AI-colorized derivative of ranat-cutout.png, based on the CC0 The Met photograph (89.4.303) documented above.
+- Color is an artistic interpretation of wood tones, not a verified reconstruction of the historical instrument. Background remains transparent. Original monochrome files retained.
+- Picker renders both instruments in grayscale at rest and reveals color on hover, keyboard focus or press. Visible credit discloses AI colorization.
+

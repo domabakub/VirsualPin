@@ -1,0 +1,36 @@
+{
+  "blend": {
+    "scene": "Ranat | graduated bars 05",
+    "only_current_scene": true,
+    "unit_scales": true,
+    "saved_as_mainfile": true
+  },
+  "glb": {
+    "dimensions_mm": [
+      1398.304,
+      360.0,
+      349.099
+    ],
+    "mesh_count": 143,
+    "keys": 21,
+    "two_mallets": true,
+    "texture_loaded": true,
+    "triangles": 325290,
+    "bytes": 9045208,
+    "import_pass": true
+  },
+  "fbx": {
+    "dimensions_mm": [
+      1398.304,
+      360.0,
+      349.099
+    ],
+    "mesh_count": 143,
+    "keys": 21,
+    "two_mallets": true,
+    "texture_loaded": true,
+    "triangles": 325296,
+    "bytes": 7891676,
+    "import_pass": true
+  }
+}

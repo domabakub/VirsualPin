@@ -1,7 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { CameraIcon, FlipIcon, HandIcon, ShieldIcon } from "@/components/icons";
+import { CameraIcon, FlipIcon, HandIcon, SettingsIcon, ShieldIcon } from "@/components/icons";
+import { useArLayout } from "@/hooks/useArLayout";
+import { mapToPluckZone, pluckStringPositions, stringPositions, type HudId } from "@/lib/ar-layout";
+import { ArHudSurface, ArLayoutEditor } from "./ArLayoutEditor";
 import { useCamera } from "@/hooks/useCamera";
 import { useHandTracking } from "@/hooks/useHandTracking";
 import type { StringIndex } from "@/data/songs";
@@ -10,7 +13,6 @@ import {
   LEFT_PINCH,
   LEFT_FRET_ZONE,
   FRET_TRAVEL,
-  RIGHT_PLUCK_ZONE,
   averageLandmarks,
   detectFret,
   detectPinchedString,
@@ -64,10 +66,11 @@ function findHandForSideZone(
   video: HTMLVideoElement | null,
   view: HTMLCanvasElement | null,
   mirrored: boolean,
+  stringArea?: { x: number; y: number; width: number; height: number },
 ) {
   const candidates = hands.map((hand) => ({
     hand,
-    x: projectToView(hand.landmarks[9], video, view, mirrored).x,
+    ...projectToView(hand.landmarks[9], video, view, mirrored),
   }));
   if (candidates.length === 2) {
     // Screen position remains stable when MediaPipe briefly flips hand labels.
@@ -76,20 +79,37 @@ function findHandForSideZone(
   }
   const only = candidates[0];
   if (!only) return undefined;
+  // A customized pluck area may be on the left of the screen. Keep a lone
+  // right hand assigned to that area rather than to the old screen midpoint.
+  if (stringArea && only.hand.side === "Right" && only.x >= stringArea.x - 0.08 && only.x <= stringArea.x + stringArea.width + 0.08 && only.y >= stringArea.y - 0.08 && only.y <= stringArea.y + stringArea.height + 0.08) {
+    return side === "Right" ? only.hand : undefined;
+  }
   // A single hand belongs to one control only. An identified left hand may
   // travel slightly past the center after calibrating fret zero.
   const controlSide = only.x < 0.5 || (only.hand.side === "Left" && only.x < 0.72) ? "Left" : "Right";
   return controlSide === side ? only.hand : undefined;
 }
 
+function getStringArea(stage: HTMLDivElement | null, strings: HTMLDivElement | null) {
+  const bounds = stage?.getBoundingClientRect();
+  const area = strings?.getBoundingClientRect();
+  if (!bounds?.width || !bounds.height || !area) return undefined;
+  return { x: (area.left - bounds.left) / bounds.width, y: (area.top - bounds.top) / bounds.height, width: area.width / bounds.width, height: area.height / bounds.height };
+}
+
 export function VirtualPhinCamera({ frets, activeString, expected, onSelectFret, onPluck, onUnlockAudio, defaultFacing = "user", onLiveChange, standaloneMode = false, className = "", modeSwitch }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
+  const stringsRef = useRef<HTMLDivElement>(null);
+  const editButtonRef = useRef<HTMLButtonElement>(null);
+  const arLayout = useArLayout();
+  const [selectedHud, setSelectedHud] = useState<HudId>("left");
   const camera = useCamera(videoRef);
   const mirrored = camera.facing === "user";
-  const tracker = useHandTracking(videoRef, canvasRef, camera.phase === "ready", mirrored, "instrument");
+  const tracker = useHandTracking(videoRef, canvasRef, camera.phase === "ready" && !arLayout.editing, mirrored, "instrument");
   const isLive = camera.phase === "ready";
-  const isExpanded = isLive || camera.phase === "requesting";
+  const isExpanded = isLive || camera.phase === "requesting" || arLayout.editing;
   useEffect(() => { onLiveChange?.(isLive); }, [isLive, onLiveChange]);
   const [leftVisible, setLeftVisible] = useState(false);
   const rightVisible = tracker.hands.some((hand) => hand.side === "Right") || tracker.hands.length === 2;
@@ -99,7 +119,6 @@ export function VirtualPhinCamera({ frets, activeString, expected, onSelectFret,
   const [leftFingerString, setLeftFingerString] = useState<StringIndex | null>(null);
   const [leftHint, setLeftHint] = useState("วางมือซ้ายด้านซ้ายของภาพ");
   const [fretSensitivity, setFretSensitivity] = useState<FretSensitivity>("normal");
-  const [fretOrigin, setFretOrigin] = useState<number>(LEFT_FRET_ZONE.minX);
   const [selectedString, setSelectedString] = useState<StringIndex | null>(null);
   const [rightPinching, setRightPinching] = useState(false);
   const [pluckState, setPluckState] = useState<PluckState>("idle");
@@ -118,6 +137,7 @@ export function VirtualPhinCamera({ frets, activeString, expected, onSelectFret,
   const rightPinchingRef = useRef(false);
   const rightSmoothedRef = useRef<CameraPoint | null>(null);
   const previousRightRef = useRef<CameraPoint | null>(null);
+  const rightGeometryRef = useRef("");
   const selectedStringRef = useRef<StringIndex | null>(null);
   const rightFrameAtRef = useRef(0);
   const rightLostAtRef = useRef(0);
@@ -150,7 +170,6 @@ export function VirtualPhinCamera({ frets, activeString, expected, onSelectFret,
       return;
     }
     fretOriginRef.current = palm.x;
-    setFretOrigin(palm.x);
     fretPreviewRef.current = 0;
     setFretPreview(0);
     ([0, 1, 2] as StringIndex[]).forEach((string) => onSelectFret(string, 0));
@@ -180,7 +199,8 @@ export function VirtualPhinCamera({ frets, activeString, expected, onSelectFret,
   }, [onSelectFret]);
 
   useEffect(() => {
-    const left = findHandForSideZone(tracker.hands, "Left", videoRef.current, canvasRef.current, mirrored);
+    if (arLayout.editing) return;
+    const left = findHandForSideZone(tracker.hands, "Left", videoRef.current, canvasRef.current, mirrored, getStringArea(stageRef.current, stringsRef.current));
     const now = performance.now();
     if (!left) {
       if (!leftLostAtRef.current) leftLostAtRef.current = now;
@@ -280,10 +300,11 @@ export function VirtualPhinCamera({ frets, activeString, expected, onSelectFret,
       const pressedString = leftFingerStringRef.current;
       ([0, 1, 2] as StringIndex[]).forEach((string) => onSelectFret(string, string === pressedString ? nextFret : 0));
     }
-  }, [fretSensitivity, mirrored, onPluck, onSelectFret, resetLeftFretToOpenString, tracker.hands]);
+  }, [arLayout.editing, fretSensitivity, mirrored, onPluck, onSelectFret, resetLeftFretToOpenString, tracker.hands]);
 
   useEffect(() => {
-    const right = findHandForSideZone(tracker.hands, "Right", videoRef.current, canvasRef.current, mirrored);
+    if (arLayout.editing) return;
+    const right = findHandForSideZone(tracker.hands, "Right", videoRef.current, canvasRef.current, mirrored, getStringArea(stageRef.current, stringsRef.current));
     const now = performance.now();
     if (!right) {
       if (!rightLostAtRef.current) rightLostAtRef.current = now;
@@ -321,10 +342,27 @@ export function VirtualPhinCamera({ frets, activeString, expected, onSelectFret,
       setRightPinching(true);
     }
 
-    const viewPoint = projectToView(focus, videoRef.current, canvasRef.current, mirrored);
+    const projected = projectToView(focus, videoRef.current, canvasRef.current, mirrored);
+    const stageBounds = stageRef.current?.getBoundingClientRect();
+    const stringBounds = stringsRef.current?.getBoundingClientRect();
+    const stringY = pluckStringPositions(arLayout.layout.strings);
+    const geometry = (stageBounds && stringBounds ? [stageBounds.width, stageBounds.height, stringBounds.left - stageBounds.left, stringBounds.top - stageBounds.top, stringBounds.width, stringBounds.height].map(value => Math.round(value)).join(":") : "") + stringY.join(":");
+    if (rightGeometryRef.current !== geometry) {
+      rightGeometryRef.current = geometry;
+      previousRightRef.current = null;
+      rightSmoothedRef.current = null;
+      rightFrameAtRef.current = 0;
+    }
+    const viewPoint = stageBounds?.width && stageBounds.height && stringBounds
+      ? mapToPluckZone(projected, {
+        x: (stringBounds.left - stageBounds.left) / stageBounds.width,
+        y: (stringBounds.top - stageBounds.top) / stageBounds.height,
+        width: stringBounds.width / stageBounds.width,
+        height: stringBounds.height / stageBounds.height,
+      }) : projected;
     const smoothed = smoothLandmark(rightSmoothedRef.current, viewPoint, 0.62);
     const elapsedMs = rightFrameAtRef.current ? Math.min(now - rightFrameAtRef.current, 90) : 0;
-    const nextString = detectString(smoothed, selectedStringRef.current);
+    const nextString = detectString(smoothed, selectedStringRef.current, stringY);
 
     if (nextString !== selectedStringRef.current) {
       selectedStringRef.current = nextString;
@@ -337,6 +375,7 @@ export function VirtualPhinCamera({ frets, activeString, expected, onSelectFret,
       elapsedMs,
       now,
       lastPluckAt: lastPluckAtRef.current,
+      stringY,
     });
 
     if (pluckedString !== null) {
@@ -357,14 +396,16 @@ export function VirtualPhinCamera({ frets, activeString, expected, onSelectFret,
     previousRightRef.current = smoothed;
     rightSmoothedRef.current = smoothed;
     rightFrameAtRef.current = now;
-  }, [mirrored, onPluck, tracker.hands]);
+  }, [arLayout.editing, arLayout.layout.strings, mirrored, onPluck, tracker.hands]);
+
+  useEffect(() => {
+    fretOriginRef.current = LEFT_FRET_ZONE.minX;
+  }, [isLive, mirrored]);
 
   useEffect(() => {
     leftSmoothedRef.current = null;
     calibrationMessageRef.current = null;
-    fretOriginRef.current = LEFT_FRET_ZONE.minX;
     queueMicrotask(() => {
-      setFretOrigin(LEFT_FRET_ZONE.minX);
       setLeftVisible(false);
       setLeftHint("วางมือซ้ายด้านซ้ายของภาพ");
     });
@@ -387,7 +428,10 @@ export function VirtualPhinCamera({ frets, activeString, expected, onSelectFret,
     rightFrameAtRef.current = 0;
     rightLostAtRef.current = 0;
     rightPinchingRef.current = false;
-  }, [isLive, mirrored, onSelectFret]);
+    if (pluckTimerRef.current) window.clearTimeout(pluckTimerRef.current);
+    lastPluckAtRef.current = -Infinity;
+    queueMicrotask(() => { setSelectedString(null); setRightPinching(false); updatePluckState("idle"); });
+  }, [arLayout.editing, isLive, mirrored, onSelectFret]);
 
   useEffect(() => () => {
     if (pluckTimerRef.current) window.clearTimeout(pluckTimerRef.current);
@@ -403,65 +447,55 @@ export function VirtualPhinCamera({ frets, activeString, expected, onSelectFret,
     ? { string: selectedString, fret: leftFingerString === selectedString ? effectiveFret : 0 }
     : undefined;
 
+  const finishEditing = (save: boolean) => {
+    if (save) arLayout.save(); else arLayout.cancel();
+    requestAnimationFrame(() => editButtonRef.current?.focus());
+  };
+
+  const renderHud = (id: HudId) => {
+    switch (id) {
+      case "status": return <div className="ar-status-pill"><span className={isLive ? "is-live" : ""} />{isLive ? `${camera.facing === "user" ? "กล้องหน้า" : "กล้องหลัง"} · ${tracker.hands.length}/2 มือ` : "ตัวอย่างหน้าจอ AR"}</div>;
+      case "flip": return <button type="button" disabled={!isLive} onClick={camera.flip} aria-label="สลับกล้อง" className="ar-camera-button"><FlipIcon className="size-5" /></button>;
+      case "left": return <div className="ar-hand-card"><p><HandIcon />มือซ้าย <span className={`ar-hand-dot ${leftVisible ? "is-live" : ""}`} /></p><strong>{leftFretActive ? leftFingerString === null ? `เฟรต ${fretPreview} · รอจีบ` : `สาย ${leftFingerString + 1} · เฟรต ${fretPreview}` : "เฟรต 0 · สายเปล่า"}</strong><small>{arLayout.editing ? "เลื่อนมือเพื่อเลือกเฟรต" : leftHint}</small></div>;
+      case "right": return <div className={`ar-hand-card ${pluckState === "pluck" ? "is-plucking" : ""}`}><p><HandIcon />มือขวา <span className={`ar-hand-dot ${rightVisible ? "is-live" : ""}`} /></p><strong>{pluckState === "pluck" && selectedString !== null ? `ดีดสาย ${selectedString + 1}` : rightPinching ? "ลากผ่านสาย" : "จีบโป้งกับชี้"}</strong></div>;
+      case "frets": return <div className="ar-fret-strip">{FRET_LABELS.map(fret => <span key={fret} className={fretPreview === fret ? "is-active" : ""}>{fret}</span>)}</div>;
+      case "strings": return <div className="ar-strings">{arLayout.layout.strings.order.map(string => <div key={string} className={`ar-string-line ${selectedString === string ? "is-active" : ""}`} style={{ top: `${stringPositions(arLayout.layout.strings)[string] * 100}%` }}><i /><span>สาย {string + 1}</span></div>)}</div>;
+      case "instrument": return <VirtualPhinInstrument frets={frets} activeString={activeString} expected={expected} locked={focusedNote} cameraActive stringOrder={arLayout.layout.strings.order} />;
+      case "calibrate": return <button type="button" disabled={!isLive || !leftVisible} onClick={calibrateFret} className="ar-calibrate-button">ตั้งเฟรต 0 <span aria-hidden="true">⌖</span></button>;
+    }
+  };
+
   return (
-    <div className={`camera-workspace ${isExpanded ? "is-expanded" : ""} ${className}`}>
-      <div className="play-mode-toolbar">
-        {modeSwitch}
-        <div className="play-mode-toolbar-copy"><h2>เล่นด้วยกล้อง</h2><p>{standaloneMode ? "AR ควบคุมด้วยมือจริง · ประมวลผลบนเครื่อง" : "ทางเลือกเสริม · ใช้ปุ่มด้านบนได้เสมอ"}</p></div>
-        <button type="button" onClick={isLive || camera.phase === "requesting" ? camera.stop : startCamera} className="ui-button"><CameraIcon className="size-4" />{camera.phase === "requesting" ? "ยกเลิกการเปิดกล้อง" : isLive ? "หยุดกล้อง" : "เปิดกล้อง"}</button>
-      </div>
+    <div className={`camera-workspace ${isExpanded ? "is-expanded" : ""} ${arLayout.editing ? "is-layout-editing" : ""} ${className}`}>
+    <div className="ar-workspace-body">
+    <div className="ar-camera-column">
     <section className="ui-panel camera-panel">
-      <p role="status" className="mb-3 text-sm text-slate-700">{camera.phase === "requesting" ? "กำลังขออนุญาตใช้กล้องจากเบราว์เซอร์…" : isLive && (tracker.phase === "loading" || tracker.phase === "idle") ? "กำลังโหลดระบบตรวจจับมือ… ครั้งแรกอาจใช้เวลาสักครู่" : isLive && tracker.phase === "tracking" ? "กล้องพร้อม · วางมือทั้งสองให้เห็นในภาพ" : "ไม่บันทึกหรือส่งภาพกล้องขึ้นเซิร์ฟเวอร์"}</p>
-      {(camera.error || (isLive && tracker.error)) && <p role="alert" className="mb-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-900">{camera.error ?? tracker.error} · {standaloneMode ? "สลับกลับไปโหมดแตะโน้ตได้" : "ใช้ปุ่มดีดสายด้านบนต่อได้"}</p>}
-      <div className="camera-stage relative min-w-0 overflow-hidden rounded-2xl bg-[#1d1d1f]">
+      <div ref={stageRef} className="camera-stage relative min-w-0 overflow-hidden rounded-2xl bg-[#1d1d1f]">
       <video ref={videoRef} muted playsInline className={`absolute inset-0 size-full object-cover transition-opacity duration-300 ${mirrored ? "scale-x-[-1]" : "scale-x-100"} ${isLive ? "opacity-100" : "opacity-0"}`} />
       <canvas ref={canvasRef} aria-label="จุดติดตามมือสำหรับเล่นพิณ" className="pointer-events-none absolute inset-0 z-20 size-full" />
       {camera.phase === "requesting" && <div className="camera-loading absolute inset-0 z-10 grid place-items-center text-sm text-white">กำลังเปิดกล้อง…</div>}
       {!isLive && <div className="studio-grid absolute inset-0 opacity-30" />}
 
-      <div className="camera-feed-meta absolute inset-x-0 top-0 z-30 flex items-center justify-between p-4">
-        <div className="flex items-center gap-2">
-          {isLive && expected && <span className="max-w-[190px] rounded-xl bg-black/85 px-3 py-2 text-xs font-semibold text-white">เป้าหมาย: สาย {expected.string + 1} · เฟรต {expected.fret}</span>}
-          {isLive && tracker.phase === "tracking" && <span className="hidden rounded-full bg-black/85 px-3 py-2 text-xs text-white sm:block">{camera.facing === "user" ? "กล้องหน้า · กระจก" : "กล้องหลัง · ภาพจริง"} · {tracker.hands.length}/2 มือ</span>}
-        </div>
-        {isLive && <button type="button" onClick={camera.flip} aria-label="สลับกล้อง" className="grid size-11 place-items-center rounded-full border border-white/45 bg-black/75 text-white backdrop-blur-sm hover:bg-black/90"><FlipIcon className="size-4" /></button>}
-      </div>
-
-      {isLive && tracker.phase === "tracking" && tracker.hands.length === 0 && <div className="pointer-events-none absolute inset-x-3 top-[17%] z-10 flex items-center gap-2 rounded-xl border border-white/30 bg-black/85 px-3 py-2 text-xs text-white"><HandIcon className="size-4 shrink-0 text-[#f1cb8c]" />วางมือซ้ายและขวาในภาพ</div>}
-
-      {isLive && (
-        <div className="pointer-events-none absolute inset-0 z-[25] text-white">
-          <div className="absolute left-3 top-[23%] flex max-w-[42%] flex-col items-start gap-1.5">
-            <div className="rounded-xl border border-white/25 bg-black/85 px-2 py-2 shadow-sm">
-              <p className="text-xs text-white">มือซ้าย · {leftVisible ? "พบมือ" : "ไม่พบมือ"}</p>
-              <p className="mt-1 text-xs font-semibold">{leftFretActive ? leftFingerString === null ? `เฟรต ${fretPreview} · รอจีบ` : `สาย ${leftFingerString + 1} · เฟรต ${fretPreview}` : "เฟรต 0 · สายเปล่า"}</p>
-              <p className="mt-1 text-[11px] text-white/80">{leftHint}</p>
-            </div>
-          </div>
-
-          <div aria-hidden="true" className="absolute top-[43%] hidden h-9 grid-cols-7 rounded-xl border border-white/20 bg-black/85 p-1 sm:grid" style={{ left: `${fretOrigin * 100}%`, width: `${FRET_TRAVEL[fretSensitivity] * 100}%` }}>
-            {FRET_LABELS.map((fret) => <div key={fret} className="grid place-items-center"><span className={`grid size-4 place-items-center rounded-full text-[10px] font-semibold transition ${fretPreview === fret ? "bg-[#e5aa5f] text-[#3b250f]" : "text-white"}`}>{fret}</span></div>)}
-          </div>
-
-          <div className={`absolute right-3 top-[23%] max-w-[44%] rounded-xl border px-2 py-2 text-right shadow-sm ${pluckState === "pluck" ? "border-[#ffd393] bg-[#74451f]" : rightPinching ? "border-[#a8ddb5] bg-[#315c3d]" : "border-white/25 bg-black/85"}`}>
-            <p className="text-xs text-white">มือขวา · {rightVisible ? "พบมือ" : "ไม่พบมือ"}</p>
-            <p className="mt-1 text-xs font-semibold">{!rightVisible ? "วางมือในภาพ" : !rightPinching ? "จีบโป้งกับชี้" : pluckState === "pluck" && selectedString !== null ? `ดีดสาย ${selectedString + 1}` : "ลากผ่านสาย"}</p>
-          </div>
-
-          <div className="absolute inset-0">
-            {RIGHT_PLUCK_ZONE.stringY.map((lineY, string) => {
-              const active = selectedString === string;
-              return <div key={string} className={`absolute right-3 flex h-12 w-[32%] -translate-y-1/2 items-center rounded-xl px-2 transition ${active ? "bg-[#3f7450]/35" : ""}`} style={{ top: `${lineY * 100}%` }}><div className={`h-[2px] flex-1 transition-all ${active ? "bg-[#fff1cf] shadow-[0_0_14px_rgba(255,238,196,.95)]" : "bg-white"}`} /><span className="ml-2 whitespace-nowrap rounded bg-black/85 px-1 py-1 text-xs font-semibold text-white">สาย {string + 1}</span></div>;
-            })}
-          </div>
-        </div>
-      )}
-
-      <VirtualPhinInstrument frets={frets} activeString={activeString} expected={expected} locked={focusedNote} cameraActive={isLive} />
-
+      {arLayout.editing && <div className="ar-layout-grid" aria-hidden="true"><span>พื้นที่จัดวางของคุณ</span></div>}
+      {isLive && expected && <span className="ar-expected-note">เป้าหมาย: สาย {expected.string + 1} · เฟรต {expected.fret}</span>}
+      {(isLive || arLayout.editing) && <ArHudSurface layout={arLayout.layout} editing={arLayout.editing} selected={selectedHud} onSelect={setSelectedHud} onUpdate={arLayout.update} stringsRef={stringsRef}>{renderHud}</ArHudSurface>}
       <div className="absolute bottom-3 left-3 z-30 rounded-full bg-black/85 px-3 py-1 text-xs text-white"><span className="inline-flex items-center gap-1"><ShieldIcon className="size-3" />ประมวลผลบนเครื่อง</span></div>
     </div>
     </section>
+      <div className="play-mode-toolbar">
+        {!arLayout.editing && modeSwitch}
+        <div className="play-mode-toolbar-copy"><h2>เล่นด้วยกล้อง</h2><p>{standaloneMode ? "AR ควบคุมด้วยมือจริง · ประมวลผลบนเครื่อง" : "ทางเลือกเสริม · ใช้ปุ่มด้านบนได้เสมอ"}</p></div>
+        {arLayout.editing ? <><div className="ar-edit-banner"><SettingsIcon className="size-4" /><strong>จัดวางหน้าจอ</strong><span>ลากเพื่อย้าย · พักการตรวจจับมือ</span></div><div className="ar-quick-actions"><button type="button" className="ui-button" onClick={() => finishEditing(false)}>ยกเลิก</button><button type="button" className="ui-button ui-primary" onClick={() => finishEditing(true)}>บันทึก</button></div></> : <>
+          <button ref={editButtonRef} type="button" disabled={!arLayout.ready} onClick={arLayout.begin} className="ui-button ar-edit-trigger"><SettingsIcon className="size-4" />จัดวางหน้าจอ</button>
+          <button type="button" onClick={isLive || camera.phase === "requesting" ? camera.stop : startCamera} className="ui-button"><CameraIcon className="size-4" />{camera.phase === "requesting" ? "ยกเลิกการเปิดกล้อง" : isLive ? "หยุดกล้อง" : "เปิดกล้อง"}</button>
+        </>}
+      </div>
+      {arLayout.message && <p role="status" className="ar-layout-message">{arLayout.message}</p>}
+      <p role="status" className="ar-camera-status">{arLayout.editing ? "พักการตรวจจับมือระหว่างจัดวางหน้าจอ" : camera.phase === "requesting" ? "กำลังขออนุญาตใช้กล้องจากเบราว์เซอร์…" : isLive && (tracker.phase === "loading" || tracker.phase === "idle") ? "กำลังโหลดระบบตรวจจับมือ… ครั้งแรกอาจใช้เวลาสักครู่" : isLive && tracker.phase === "tracking" ? "กล้องพร้อม · วางมือทั้งสองให้เห็นในภาพ" : "ไม่บันทึกหรือส่งภาพกล้องขึ้นเซิร์ฟเวอร์"}</p>
+      {(camera.error || (isLive && tracker.error)) && <p role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-900">{camera.error ?? tracker.error} · {standaloneMode ? "สลับกลับไปโหมดแตะโน้ตได้" : "ใช้ปุ่มดีดสายด้านบนต่อได้"}</p>}
+    </div>
+    {arLayout.editing && <ArLayoutEditor layout={arLayout.layout} selected={selectedHud} onSelect={setSelectedHud} onUpdate={arLayout.update} onReset={arLayout.reset} onSave={() => finishEditing(true)} onCancel={() => finishEditing(false)} onApplyAppearance={arLayout.applyAppearance} />}
+    </div>
     <details className="ui-panel camera-settings text-sm text-slate-700">
     <summary className="min-h-11 cursor-pointer font-semibold">ตั้งค่ามือและวิธีควบคุม</summary>
     <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-slate-700">

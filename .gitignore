@@ -22,3 +22,11 @@ pnpm-debug.log*
 
 # Vercel local project settings
 .vercel
+
+# Blender/export working files (large binaries); keep scripts, notes and validation JSON
+/art/**/*.blend
+/art/**/*.blend1
+/art/**/*.fbx
+/art/**/*.glb
+/art/**/*.zip
+/art/**/*.png

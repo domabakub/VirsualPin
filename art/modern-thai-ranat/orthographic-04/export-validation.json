@@ -1,0 +1,36 @@
+{
+  "blend": {
+    "scene": "Ranat | orthographic reconstruction 04",
+    "only_current_scene": true,
+    "unit_scales": true,
+    "saved_as_mainfile": true
+  },
+  "glb": {
+    "dimensions_mm": [
+      1398.304,
+      360.0,
+      349.099
+    ],
+    "mesh_count": 143,
+    "keys": 21,
+    "two_mallets": true,
+    "texture_loaded": true,
+    "triangles": 325226,
+    "bytes": 8696484,
+    "import_pass": true
+  },
+  "fbx": {
+    "dimensions_mm": [
+      1398.304,
+      360.0,
+      349.099
+    ],
+    "mesh_count": 143,
+    "keys": 21,
+    "two_mallets": true,
+    "texture_loaded": true,
+    "triangles": 325232,
+    "bytes": 7892620,
+    "import_pass": true
+  }
+}
