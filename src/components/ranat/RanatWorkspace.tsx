@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { InstrumentNav } from "@/components/navigation/InstrumentNav";
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { articulations, bars, NUMBER_KEYS, ranatKeyboardIndex, type Articulation, type RanatEvent, type RanatTake } from "@/instruments/ranat/model";
@@ -66,6 +67,7 @@ export function RanatWorkspace() {
   }
   return <div className="rn-page app-shell">
     <header className="rn-header"><Link href="/instruments" className="app-brand">ranat next<span>.</span></Link><nav aria-label="เครื่องดนตรี"><Link href="/instruments/phin">Phin Next</Link><Link href="/instruments/ranat">รู้จักระนาด</Link></nav><Link className="rn-back" href="/instruments">เครื่องดนตรีทั้งหมด <span>↗</span></Link></header>
+    <InstrumentNav current="ranat" />
     <main id="main-content" className="rn-main" tabIndex={-1}>
       <section className="rn-heading"><div><p className="eyebrow">THE NEXT CHAPTER OF THAI SOUND</p><h1>สองไม้.<span> หนึ่งทำนอง.</span></h1><p className="rn-intro">สัมผัสเสียงระนาดเอก เล่นอย่างอิสระ ในจังหวะของคุณ</p></div><button className="ui-button rn-demo" onClick={audio.playing ? audio.stop : demo}><span aria-hidden="true">{audio.playing ? "■" : "▷"}</span>{audio.playing ? "หยุดฟัง" : "ฟังตัวอย่าง"}</button></section>
       <section className="rn-stage" aria-label="พื้นที่เล่นระนาด">

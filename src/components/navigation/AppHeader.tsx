@@ -1,9 +1,10 @@
 import Link from "next/link";
+import { InstrumentNav } from "@/components/navigation/InstrumentNav";
 import { AppBrand } from "./AppBrand";
 
 export type NavigationPage = "home" | "songs" | "learn" | "takes" | "settings";
 export const navigationItems = [
-  { id: "home", href: "/", label: "ภาพรวม" },
+  { id: "home", href: "/", label: "หน้าแรก" },
   { id: "songs", href: "/songs", label: "คลังเพลง" },
   { id: "learn", href: "/songs?category=learn", label: "เริ่มต้นเรียน" },
   { id: "takes", href: "/takes", label: "บันทึกของฉัน" },
@@ -20,6 +21,7 @@ export function AppHeader({ active, studio = false, studioBackHref = "/songs", s
         </nav>}
         <Link href={studio ? studioBackHref : "/play/free-play"} className="header-action">{studio ? studioBackLabel : "ลองเล่นพิณ"}<span aria-hidden="true">↗</span></Link>
       </div>
+      <InstrumentNav current="phin" />
     </header>
   );
 }

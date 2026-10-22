@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import type { StringIndex } from "@/data/songs";
 import { getPhinMidi, getPhinNoteName } from "@/lib/audio/phinTuning";
@@ -138,7 +137,6 @@ export function StudioTouchPhin({
       </div>
 
       <div className="studio-touch-stage">
-        <Image className="studio-touch-reference" src="/assets/phin/phin-touch-reference.jpg" alt="" aria-hidden="true" width={465} height={659} priority draggable={false} />
         <div className="studio-touch-neck" ref={neckRef}>
           <span className="studio-touch-middle-string" aria-hidden="true" />
           {Array.from({ length: TOUCH_PHIN_FRETS }, (_, fret) => <div className="studio-touch-fret" data-fret={fret} key={fret}>

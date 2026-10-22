@@ -278,7 +278,6 @@ progress::-moz-progress-bar { background: var(--action); border-radius: 999px; }
 .freeplay-touch-heading span { color: #94a5b3; font-size: 10px; }
 .freeplay-touch-heading .freeplay-touch-hint { border: 1px solid rgba(255,255,255,.1); border-radius: 999px; padding: 6px 9px; color: #c9d4dc; background: rgba(255,255,255,.04); white-space: nowrap; }
 .freeplay-touch-stage { position: relative; min-height: 370px; overflow: hidden; isolation: isolate; touch-action: manipulation; user-select: none; background: radial-gradient(circle at 70% 50%,#31383e 0,#1b2126 48%,#101519 100%); }
-.freeplay-touch-reference { position: absolute; z-index: 0; left: 54%; top: 50%; width: 490px; max-width: none; height: auto; transform: translate(-50%,-50%) rotate(-90deg) scale(.78); opacity: .18; filter: invert(1) contrast(1.35); mix-blend-mode: screen; pointer-events: none; }
 .freeplay-touch-neck { position: absolute; z-index: 2; inset: 20% 5% 18%; display: grid; grid-template-columns: repeat(7,minmax(42px,1fr)); border-inline: 2px solid rgba(255,255,255,.16); }
 .freeplay-touch-neck::before,.freeplay-touch-neck::after { content: ""; position: absolute; z-index: -1; left: -2%; right: -2%; height: 2px; background: linear-gradient(90deg,transparent,#d1a366 5%,#f0c88c 50%,#d1a366 95%,transparent); box-shadow: 0 0 7px rgba(232,178,106,.48); }
 .freeplay-touch-neck::before { top: 16.666%; }

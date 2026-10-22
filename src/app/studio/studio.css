@@ -178,7 +178,6 @@
 .studio-touch-settings .studio-scale-lock { display: flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 8px; border: 1px solid rgba(255, 255, 255, .08); border-radius: 8px; color: var(--studio-text); background: var(--surface-high); }
 .studio-scale-lock input { width: 16px; height: 16px; accent-color: var(--studio-green); }
 .studio-touch-stage { position: relative; min-height: 390px; overflow: hidden; isolation: isolate; touch-action: none; user-select: none; background: radial-gradient(circle at 72% 52%, #2c3034 0, #191c1f 48%, #101214 100%); }
-.studio-touch-reference { position: absolute; z-index: 0; left: 52%; top: 50%; width: 500px; max-width: none; height: auto; transform: translate(-50%, -50%) rotate(-90deg) scale(.78); opacity: .2; filter: invert(1) contrast(1.35); mix-blend-mode: screen; pointer-events: none; }
 .studio-touch-neck { position: absolute; z-index: 2; left: 6%; right: 7%; top: 20%; bottom: 18%; display: grid; grid-template-columns: repeat(7, minmax(58px, 1fr)); border-inline: 2px solid rgba(255, 255, 255, .15); }
 .studio-touch-neck::before, .studio-touch-neck::after { content: ""; position: absolute; z-index: -1; left: -2%; right: -2%; height: 2px; background: linear-gradient(90deg, transparent, #d1a366 5%, #f0c88c 50%, #d1a366 95%, transparent); box-shadow: 0 0 6px rgba(232, 178, 106, .44); }
 .studio-touch-neck::before { top: 16.66%; }

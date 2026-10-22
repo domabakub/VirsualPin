@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { InstrumentNav } from "@/components/navigation/InstrumentNav";
 import { RanatPlayStage } from "@/components/ranat/RanatPlayStage";
 import "./ranat.css";
 import "./landing.css";
@@ -14,6 +15,7 @@ const parts = [
 export default function RanatPage() {
   return <div className="rn-page app-shell rn-landing">
     <header className="rn-header"><Link href="/instruments" className="app-brand">ranat next<span>.</span></Link><nav aria-label="เครื่องดนตรี"><Link href="/instruments/phin">Phin Next</Link><Link href="/instruments/ranat" aria-current="page">Ranat Next</Link></nav><Link href="/instruments/ranat/play" className="rn-back">ลองเล่นระนาด ↗</Link></header>
+    <InstrumentNav />
     <main id="main-content" className="rn-main" tabIndex={-1}>
       <section className="rl-hero">
         <div><p className="eyebrow">ROOTED IN CULTURE · RANAT EK</p><h1>สองไม้.<br/><span>เรื่องราวไม่รู้จบ.</span></h1><p className="rl-lead">รู้จักระนาดเอก ผ่านเสียง งานช่าง และทำนอง<br/>จากวงปี่พาทย์ สู่เสียงแรกที่คุณลองเล่นเอง</p><div className="rl-actions"><Link href="/instruments/ranat/play" className="ui-button ui-primary">ลองเล่นระนาด <span aria-hidden="true">↗</span></Link><a href="#story" className="text-link">อ่านเรื่องราว <span aria-hidden="true">↓</span></a></div><p className="rl-note">เล่นได้บนเบราว์เซอร์ · ไม่ต้องสมัครสมาชิก</p></div>

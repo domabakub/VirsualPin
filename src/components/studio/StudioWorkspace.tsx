@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { InstrumentNav } from "@/components/navigation/InstrumentNav";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CameraIcon, ClockIcon, MusicIcon, PlayIcon, VolumeIcon } from "@/components/icons";
 import { VirtualPhinCamera } from "@/components/play/VirtualPhinCamera";
@@ -457,6 +458,7 @@ export function StudioWorkspace() {
           <button type="button" className="studio-export-primary" onClick={() => exportProject("wav")} disabled={Boolean(exporting)}>{exporting === "wav" ? "กำลังสร้าง…" : "Export WAV"}</button>
         </div>
       </header>
+      <InstrumentNav current="phin" />
 
       <main id="main-content" className="studio-main">
         <section className="studio-session-toolbar" aria-label="เครื่องมือโปรเจกต์">

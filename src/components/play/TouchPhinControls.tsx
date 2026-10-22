@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import type { StringIndex } from "@/data/songs";
 import { getPhinNoteName } from "@/lib/audio/phinTuning";
 
@@ -26,16 +25,6 @@ export function TouchPhinControls({ frets, activeString, expected, onSelectFret,
           <span className="freeplay-touch-hint">แตะได้ทุกสาย · เฟรต 0–6</span>
         </div>
         <div className="freeplay-touch-stage">
-          <Image
-            className="freeplay-touch-reference"
-            src="/assets/phin/phin-touch-reference.jpg"
-            alt=""
-            aria-hidden="true"
-            width={465}
-            height={659}
-            priority
-            draggable={false}
-          />
           <div className="freeplay-touch-neck">
             <span className="freeplay-touch-middle-string" aria-hidden="true" />
             {Array.from({ length: 7 }, (_, fret) => (

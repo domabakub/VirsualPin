@@ -1,0 +1,6 @@
+.nav { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding: 12px clamp(16px, 4vw, 52px); background: var(--surface); color: var(--text); border-bottom: 1px solid var(--line); font-size: 14px; }
+.links { display: flex; align-items: center; gap: 24px; }
+.nav a { min-height: 44px; display: inline-flex; align-items: center; gap: 8px; }
+.nav a:hover, .nav a[aria-current] { color: var(--action); }
+.switch { color: var(--action); font-weight: 500; }
+@media (max-width: 380px) { .nav { gap: 4px; font-size: 12px; } .links { gap: 14px; } }
