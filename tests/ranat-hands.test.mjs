@@ -1,9 +1,37 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { HandMalletController, DEFAULT_CALIBRATION, displayMalletPoses } from "../src/instruments/ranat/handMallets.ts";
+import { HandMalletController, DEFAULT_CALIBRATION, displayMalletPoses, previewMalletPoses } from "../src/instruments/ranat/handMallets.ts";
 import { validateCalibration, mapCameraPoint } from "../src/instruments/ranat/camera.ts";
 const config = { calibration: DEFAULT_CALIBRATION, start: 7, count: 8, mode: "direct", offset: 7, sensitivity: .5 };
 const palm = (hand, v, x = .4, confidence = .95) => ({ hand, x, y: .22 + v * .56, confidence });
+
+test("preview follows both hands before playing, including outside the strike area", () => {
+  const poses = previewMalletPoses([palm("L", -.5, .05), palm("R", .8, .95)], 100, config);
+  assert.deepEqual(poses.map(p => [p.hand, p.bar]), [["L", 7], ["R", 14]]);
+  assert.ok(poses.every(p => !p.armed));
+  assert.equal(previewMalletPoses([], 120, config).length, 0);
+  assert.equal(previewMalletPoses([palm("L", .1, .4, .2)], 120, config).length, 0);
+});
+
+test("paired strokes work with both hands visible and keep the same owner", () => {
+  const c = new HandMalletController(), cfg = { ...config, mode: "pair" };
+  c.update([palm("R", .1)], 0, cfg);
+  c.update([palm("L", .1), palm("R", .4)], 40, cfg);
+  const frame = c.update([palm("L", .1), palm("R", .8)], 80, cfg);
+  assert.equal(frame.commands.length, 1);
+  assert.equal(frame.commands[0].hand, "R");
+  assert.equal(displayMalletPoses(frame.poses, "pair", 7).length, 2);
+  assert.equal(c.update([palm("L", .8)], 120, cfg).commands.length, 0);
+});
+
+test("assisted hold accepts a second visible hand and releases when both disappear", () => {
+  const c = new HandMalletController(), cfg = { ...config, mode: "kro" };
+  c.update([palm("L", .1), palm("R", .1, .7)], 0, cfg);
+  c.update([palm("L", .7), palm("R", .2, .7)], 40, cfg);
+  c.update([palm("L", .7), palm("R", .2, .7)], 140, cfg);
+  assert.equal(c.update([palm("L", .7), palm("R", .2, .7)], 240, cfg).commands[0].kind, "hold");
+  assert.deepEqual(c.update([], 280, cfg).commands, [{ kind: "release", owner: "camera-hold" }]);
+});
 test("two independent hands strike once, then must rise again", () => {
   const c = new HandMalletController();
   c.update([palm("L",.1),palm("R",.1,.7)],0,config);

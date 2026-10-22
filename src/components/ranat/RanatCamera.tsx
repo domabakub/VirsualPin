@@ -4,7 +4,7 @@ import { useCamera } from "@/hooks/useCamera";
 import { useHandTracking } from "@/hooks/useHandTracking";
 import { type Articulation, type RanatSource, bars } from "@/instruments/ranat/model";
 import { validateCalibration, type Calibration } from "@/instruments/ranat/camera";
-import { DEFAULT_CALIBRATION, HAND_TIMEOUT_MS, HandMalletController, displayMalletPoses, type MalletCommand, type MalletFrame, type PalmSample } from "@/instruments/ranat/handMallets";
+import { DEFAULT_CALIBRATION, HAND_TIMEOUT_MS, HandMalletController, displayMalletPoses, previewMalletPoses, type MalletCommand, type MalletFrame, type PalmSample } from "@/instruments/ranat/handMallets";
 import { RanatPlayStage } from "./RanatPlayStage";
 import type { RanatHit } from "./RanatScene";
 
@@ -50,9 +50,17 @@ export function RanatCamera({ mode, offset, rangeStart, hits, suspended, pauseTo
       return { ...anchor, x: camera.facing === "user" ? 1 - anchor.x : anchor.x, hand: hand.side === "Left" ? "L" : "R", confidence: hand.confidence };
     });
     latestPoints.current = points; lastFrame.current = tracker.frameTime;
-    if (!running || suspended || step !== null || camera.phase !== "ready" || tracker.phase !== "tracking" || document.hidden || !document.hasFocus()) return;
+    if (camera.phase !== "ready" || tracker.phase !== "tracking" || document.hidden) return;
+    if (!running || suspended || step !== null) {
+      dispatch(controller.current.reset());
+      const preview = { poses: previewMalletPoses(points, tracker.frameTime, config), commands: [], ambiguous: false };
+      const animation = requestAnimationFrame(() => setFrame(preview));
+      return () => cancelAnimationFrame(animation);
+    }
     const result = controller.current.update(points, tracker.frameTime, config);
-    dispatch(result.commands); setFrame(result);
+    dispatch(result.commands);
+    const animation = requestAnimationFrame(() => setFrame({ ...result, poses: result.poses.length ? result.poses : previewMalletPoses(points, tracker.frameTime, config) }));
+    return () => cancelAnimationFrame(animation);
   }, [tracker.hands, tracker.frameTime, tracker.phase, camera.facing, camera.phase, running, suspended, step, config, dispatch]);
   useEffect(() => {
     const currentController = controller.current;
@@ -103,13 +111,13 @@ export function RanatCamera({ mode, offset, rangeStart, hits, suspended, pauseTo
   return <div className="rn-air-workspace">
     <div className="rn-air-toolbar"><div className="rn-air-copy"><p className="eyebrow">HAND PLAY / เล่นด้วยมือ</p><h2>มือขยับ. ไม้ตาม.</h2><p role="status">{status}</p>
       <div className="rn-air-actions">{camera.phase !== "ready" ? <button className="ui-button" disabled={camera.phase === "requesting"} onClick={() => void camera.start()}>{camera.phase === "requesting" ? "กำลังเปิดกล้อง…" : "เปิดกล้อง"}</button> : <>
-        <button className={`ui-button ${running ? "rn-air-running" : ""}`} disabled={!ready || suspended || step !== null} onClick={() => running ? pause() : void startPlaying()}>{running ? "พักการจับมือ" : "เริ่มจับมือ"}</button>
+        <button className={`ui-button ${running ? "rn-air-running" : ""}`} disabled={!ready || suspended || step !== null} onClick={() => running ? pause() : void startPlaying()}>{running ? "พักการจับมือ" : "เปิดเสียงและเริ่มตี"}</button>
         <button onClick={calibrate} disabled={!ready}>ตั้งพื้นที่เล่น</button><button onClick={() => { pause(); cancelCapture(); setStep(null); camera.stop(); }}>ปิดกล้อง</button>
       </>}</div>
       {camera.phase === "ready" && !ready && !tracker.error && <small>กำลังเตรียมระบบจับมือครั้งแรก…</small>}
-      {mode !== "direct" && <small>โหมดช่วยใช้มือเดียว{mode === "kro" || mode === "roll" ? " ลดมือค้างเพื่อเล่น ยกมือเพื่อหยุด" : " ยก–ลดหนึ่งครั้งเพื่อตีคู่"}</small>}
+      {mode !== "direct" && <small>โหมดช่วยใช้มือหลักหนึ่งมือ อีกมืออยู่ในภาพได้{mode === "kro" || mode === "roll" ? " ลดมือค้างเพื่อเล่น ยกมือเพื่อหยุด" : " ยก–ลดหนึ่งครั้งเพื่อตีคู่"}</small>}
     </div><div className="rn-air-preview" style={{ aspectRatio: aspect }}>
-      <video ref={videoRef} muted playsInline onLoadedMetadata={e => { const v = e.currentTarget; if (v.videoWidth && v.videoHeight) setAspect(v.videoWidth / v.videoHeight); }} style={{ transform: "scaleX(-1)" }}/><canvas ref={canvasRef}/>
+      <video ref={videoRef} muted playsInline onLoadedMetadata={e => { const v = e.currentTarget; if (v.videoWidth && v.videoHeight) setAspect(v.videoWidth / v.videoHeight); }} style={{ transform: camera.facing === "user" ? "scaleX(-1)" : undefined }}/><canvas ref={canvasRef}/>
       {camera.phase === "ready" && <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="rn-air-guides" aria-hidden="true"><rect x={calibration.left*100} y={calibration.raised*100} width={(calibration.right-calibration.left)*100} height={(calibration.lowered-calibration.raised)*100} fill="none" stroke="#fff8" strokeWidth=".5"/><path d={`M${calibration.left*100} ${calibration.raised*100}H${calibration.right*100}`} stroke="#a9edc4" strokeWidth=".8"/><path d={`M${calibration.left*100} ${(calibration.raised+(calibration.lowered-calibration.raised)*.62)*100}H${calibration.right*100}`} stroke="#f5c17e" strokeWidth=".8" strokeDasharray="2 2"/></svg>}
       {camera.phase !== "ready" && <div className="rn-air-placeholder"><span aria-hidden="true">◎</span><small>ให้กล้องเห็นสองมือ</small></div>}<span className="rn-air-preview-label">{ready ? `${tracker.hands.length} มือ · ${tracker.fps} FPS` : "CAMERA PREVIEW"}</span>
     </div></div>

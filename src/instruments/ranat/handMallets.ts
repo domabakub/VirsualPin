@@ -14,10 +14,22 @@ export const HAND_TIMEOUT_MS = 180;
 export const DEFAULT_CALIBRATION: Calibration = { left: .12, right: .88, raised: .22, lowered: .78 };
 const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v));
 
+/** Show tracked hands even while sound is paused or the palm is outside the strike region. */
+export function previewMalletPoses(samples: PalmSample[], now: number, config: MalletConfig): MalletPose[] {
+  const c = config.calibration;
+  const last = Math.min(config.start + config.count - 1, (config.mode === "pair" || config.mode === "kro") ? 20 - config.offset : 20);
+  if (last < config.start) return [];
+  return samples.filter((s, i) => s.confidence >= .55 && Number.isFinite(s.x) && Number.isFinite(s.y) && samples.findIndex(p => p.hand === s.hand) === i).map(s => {
+    const u = clamp((s.x - c.left) / (c.right - c.left), 0, 1);
+    const v = clamp((s.y - c.raised) / (c.lowered - c.raised), -.4, 1.4);
+    return { hand: s.hand, bar: Math.min(last, config.start + Math.floor(u * config.count)), u, v, armed: false, stamp: now };
+  });
+}
+
 /** Assisted techniques have one physical controller but two virtual mallets. */
 export function displayMalletPoses(poses: MalletPose[], mode: Articulation, offset: number): MalletPose[] {
   if (mode === "direct") return poses;
-  if (poses.length !== 1) return [];
+  if (!poses.length) return [];
   const base = poses[0], second = mode === "roll" ? base.bar : base.bar + offset;
   if (second >= 21) return [];
   return [{ ...base, hand: "L" }, { ...base, hand: "R", bar: second }];
@@ -41,10 +53,15 @@ export class HandMalletController {
     const poses: MalletPose[] = [];
     const ambiguous = new Set(samples.map(s => s.hand)).size !== samples.length;
     if (!Number.isFinite(now) || ambiguous) return { poses, commands: [...commands, ...this.reset()], ambiguous };
-    const accepted = samples.filter(s => Number.isFinite(s.confidence) && s.confidence >= .55);
+    let accepted = samples.filter(s => Number.isFinite(s.confidence) && s.confidence >= .55);
     const assisted = config.mode !== "direct";
     // Two hands may play independently only in direct mode; one hand owns assisted patterns.
-    if (assisted && samples.length !== 1) return { poses, commands: [...commands, ...this.reset()], ambiguous: false };
+    if (assisted) {
+      const owner = this.held?.hand ?? this.tracks.keys().next().value;
+      const primary = accepted.find(s => s.hand === owner) ?? accepted.find(s => s.hand === "L") ?? accepted[0];
+      if (owner && primary?.hand !== owner) commands.push(...this.reset());
+      accepted = primary ? [primary] : [];
+    }
     const seen = new Set<MalletHand>();
     for (const sample of accepted) {
       const mapped = mapCameraPoint(sample, config.calibration, config.start, config.count);

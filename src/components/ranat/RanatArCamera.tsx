@@ -4,7 +4,7 @@ import { Component, useCallback, useEffect, useMemo, useRef, useState, type Keyb
 import { useCamera } from "@/hooks/useCamera";
 import { useHandTracking } from "@/hooks/useHandTracking";
 import { type Articulation, type RanatSource, bars } from "@/instruments/ranat/model";
-import { DEFAULT_CALIBRATION, HAND_TIMEOUT_MS, HandMalletController, displayMalletPoses, type MalletCommand, type MalletFrame, type PalmSample } from "@/instruments/ranat/handMallets";
+import { DEFAULT_CALIBRATION, HAND_TIMEOUT_MS, HandMalletController, displayMalletPoses, previewMalletPoses, type MalletCommand, type MalletFrame, type PalmSample } from "@/instruments/ranat/handMallets";
 import { AR_PLACEMENT_KEY, AR_PLACEMENT_LIMITS, AR_REGION_MESSAGES, DEFAULT_AR_PLACEMENT, clampPlacement, parsePlacement, regionFromBars, serializePlacement, videoToView, type ArPlacement, type ScreenBar } from "@/instruments/ranat/ar";
 import type { RanatHit } from "./RanatScene";
 
@@ -74,9 +74,17 @@ export function RanatArCamera({ mode, offset, rangeStart, hits, suspended, pause
       return { ...videoToView(anchor, source, view, mirrored), hand: hand.side === "Left" ? "L" : "R", confidence: hand.confidence };
     });
     lastFrame.current = tracker.frameTime;
-    if (!running || suspended || editing || !calibration || camera.phase !== "ready" || tracker.phase !== "tracking" || document.hidden || !document.hasFocus()) return;
+    if (camera.phase !== "ready" || tracker.phase !== "tracking" || document.hidden) return;
+    if (!running || suspended || editing || !calibration) {
+      dispatch(controller.current.reset());
+      const preview = { poses: previewMalletPoses(points, tracker.frameTime, config), commands: [], ambiguous: false };
+      const animation = requestAnimationFrame(() => setFrame(preview));
+      return () => cancelAnimationFrame(animation);
+    }
     const result = controller.current.update(points, tracker.frameTime, config);
-    dispatch(result.commands); setFrame(result);
+    dispatch(result.commands);
+    const animation = requestAnimationFrame(() => setFrame({ ...result, poses: result.poses.length ? result.poses : previewMalletPoses(points, tracker.frameTime, config) }));
+    return () => cancelAnimationFrame(animation);
   }, [tracker.hands, tracker.frameTime, tracker.phase, mirrored, camera.phase, running, suspended, editing, calibration, config, dispatch]);
 
   useEffect(() => {
@@ -138,14 +146,14 @@ export function RanatArCamera({ mode, offset, rangeStart, hits, suspended, pause
   return <div className="rn-ar-workspace">
     <div className="rn-air-toolbar rn-ar-toolbar"><div className="rn-air-copy"><p className="eyebrow">AR OVERLAY / ระนาดบนภาพกล้อง</p><h2>ระนาดอยู่ตรงหน้า.</h2><p role="status">{status}</p>
       <div className="rn-air-actions">{camera.phase !== "ready" ? <button className="ui-button" disabled={camera.phase === "requesting"} onClick={() => void camera.start()}>{camera.phase === "requesting" ? "กำลังเปิดกล้อง…" : "เปิดกล้อง AR"}</button> : <>
-        <button className={`ui-button ${running ? "rn-air-running" : ""}`} disabled={!ready || suspended || editing || !calibration} onClick={() => running ? pause() : void startPlaying()}>{running ? "พักการจับมือ" : "เริ่มจับมือ"}</button>
+        <button className={`ui-button ${running ? "rn-air-running" : ""}`} disabled={!ready || suspended || editing || !calibration} onClick={() => running ? pause() : void startPlaying()}>{running ? "พักการจับมือ" : "เปิดเสียงและเริ่มตี"}</button>
         <button onClick={() => void camera.flip()}>สลับกล้อง</button>
         <button onClick={() => { pause(); setRunning(false); setDraft(null); camera.stop(); }}>ปิดกล้อง</button>
       </>}
         {!editing && <button onClick={() => { pause(); setDraft(placement); setMessage(""); }}>จัดตำแหน่งระนาด</button>}
       </div>
       {camera.phase === "ready" && !ready && !tracker.error && <small>กำลังเตรียมระบบจับมือครั้งแรก…</small>}
-      {mode !== "direct" && <small>โหมดช่วยใช้มือเดียว{mode === "kro" || mode === "roll" ? " ลดมือค้างที่ลูกเพื่อเล่น ยกมือเพื่อหยุด" : " ยก–ลดหนึ่งครั้งเพื่อตีคู่"}</small>}
+      {mode !== "direct" && <small>โหมดช่วยใช้มือหลักหนึ่งมือ อีกมืออยู่ในภาพได้{mode === "kro" || mode === "roll" ? " ลดมือค้างที่ลูกเพื่อเล่น ยกมือเพื่อหยุด" : " ยก–ลดหนึ่งครั้งเพื่อตีคู่"}</small>}
     </div></div>
     <div ref={stageRef} className="rn-ar-stage" data-editing={editing}>
       <video ref={videoRef} className="rn-ar-video" muted playsInline style={{ transform: mirrored ? "scaleX(-1)" : undefined }}/>
