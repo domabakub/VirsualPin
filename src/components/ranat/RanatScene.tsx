@@ -10,6 +10,7 @@ import type { ArPlacement, ScreenBar } from "@/instruments/ranat/ar";
 import { MalletContactController, type ContactHead } from "@/instruments/ranat/malletContact";
 import type { Articulation } from "@/instruments/ranat/model";
 import type { MalletCommand } from "@/instruments/ranat/handMallets";
+import { findMalletHead } from "@/instruments/ranat/modelNodes";
 
 export type RanatHit = { bar: number; hand: "L" | "R"; stamp: number; id?: number };
 export type RanatSceneProps = {
@@ -85,11 +86,7 @@ function Instrument({ hits = EMPTY_HITS, poses = EMPTY_POSES, range = [0, 20], d
       if (!node) throw new Error(`Missing ranat mallet ${hand}`);
       return node;
     });
-    const heads = mallets.map((node, index) => {
-      const head = node.getObjectByName(`O5 | Padded_Head_${index ? "R" : "L"}`);
-      if (!head) throw new Error("Missing padded mallet head");
-      return head;
-    });
+    const heads = mallets.map((node, index) => findMalletHead(node, index ? "R" : "L"));
     const contactBars = barNodes.map((node, bar) => {
       const box = new Box3().setFromObject(node);
       return { bar, left: box.min.x, right: box.max.x, front: box.min.z, back: box.max.z, top: box.max.y };
