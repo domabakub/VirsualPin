@@ -29,6 +29,15 @@ export function parseRanatTake(value: unknown): RanatTake | null {
 }
 export const KEYBOARD_KEYS = "asdfghjkl;";
 export const NUMBER_KEYS = "1234567890";
+/** Each stroke is immediate; two-digit bar numbers use Shift rather than typing a sequence. */
+export function ranatKeyboardBar(code: string, key: string, shift = false) {
+  if (code === "KeyQ") return 20;
+  const index = ranatKeyboardIndex(code, key);
+  return index < 0 ? -1 : index + (shift ? 10 : 0);
+}
+export function ranatKeyboardLabel(bar: number) {
+  return bar === 20 ? "Q" : `${bar >= 10 ? "Shift + " : ""}${NUMBER_KEYS[bar % 10]}`;
+}
 /** Physical number/letter rows also work with the Thai keyboard layout. */
 export function ranatKeyboardIndex(code: string, key: string) {
   if (/^Digit[0-9]$/.test(code)) return NUMBER_KEYS.indexOf(code.slice(-1));
