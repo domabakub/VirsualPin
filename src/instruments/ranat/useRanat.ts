@@ -71,7 +71,8 @@ export function useRanat() {
       if (pattern.current?.owner === owner) { pattern.current.pendingBase = base; return; }
       pattern.current = { owner, base, offset, mode, source, next: audio.time + 0.01, step: 0 }; setActive(true);
     } else if (mode === "pair") {
-      emit(base, "L", source, true, audio.time, velocity); emit(base + offset, "R", source, true, audio.time, velocity);
+      const pair = resolvePair(base, offset)!;
+      emit(pair[0], "L", source, true, audio.time, velocity); emit(pair[1], "R", source, true, audio.time, velocity);
     } else emit(base, hand, source, false, audio.time, velocity);
   }, [emit, endPattern, unlock]);
   const release = useCallback((owner: string) => { operation.current++; endPattern(owner); }, [endPattern]);

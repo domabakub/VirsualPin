@@ -4,16 +4,19 @@ import { bars, resolvePair, patternNote, parseRanatTake } from "../src/instrumen
 import { CameraStrike, mapCameraPoint, validateCalibration } from "../src/instruments/ranat/camera.ts";
 import { encodeWave } from "../src/instruments/ranat/export.ts";
 import { RanatAudio } from "../src/instruments/ranat/audio.ts";
+import { HandMalletController, DEFAULT_CALIBRATION } from "../src/instruments/ranat/handMallets.ts";
 
 test("octaves resolve seven positions apart without wrapping or clamping", () => {
   assert.equal(bars.length, 21);
   for (let i = 0; i < 14; i++) { assert.deepEqual(resolvePair(i, 7), [i, i + 7]); assert.ok(Math.abs(bars[i+7].frequency / bars[i].frequency - 2) < .00001); }
-  for (const i of [-1, 14, 20, 21, NaN, .5]) assert.equal(resolvePair(i, 7), null);
+  for (let i = 14; i <= 20; i++) assert.deepEqual(resolvePair(i, 7), [i, i - 7]);
+  for (const i of [-1, 21, NaN, .5]) assert.equal(resolvePair(i, 7), null);
   assert.equal(resolvePair(0, 0), null);
 });
 test("kro alternates two targets while roll alternates hands on one target", () => {
   assert.deepEqual([0,1,2,3].map(i => patternNote(3,7,"kro",i)), [{bar:3,hand:"L"},{bar:10,hand:"R"},{bar:3,hand:"L"},{bar:10,hand:"R"}]);
-  assert.equal(patternNote(20,7,"kro",0), null);
+  assert.deepEqual(patternNote(20,7,"kro",0), {bar:20,hand:"L"});
+  assert.deepEqual(patternNote(20,7,"kro",1), {bar:13,hand:"R"});
   assert.deepEqual(patternNote(20,7,"roll",1), {bar:20,hand:"R"});
 });
 test("calibration rejects too narrow a stroke and does not clamp out-of-frame hands", () => {
@@ -66,6 +69,29 @@ test("audio release cancels scheduled hits while retaining already sounding tail
     const audio = new RanatAudio(); await audio.unlock();
     audio.strike(0,.7,1); audio.strike(7,.7,1.04);
     audio.cancelPending(); assert.equal(sources[0].stopped,false); assert.equal(sources[1].stopped,true);
+    // A camera stroke reaches the audio engine for every bar, including slow devices.
+    const cfg = { calibration: DEFAULT_CALIBRATION, start: 0, count: 21, mode: "direct", offset: 7, sensitivity: .5 };
+    for (let bar = 0; bar < 21; bar++) {
+      const controller = new HandMalletController();
+      const x = .02 + (bar + .5) * .96 / 21;
+      controller.update([{ hand: "L", confidence: .95, x, y: .22 }], 100, cfg);
+      const frame = controller.update([{ hand: "L", confidence: .95, x, y: .78 }], 400, cfg);
+      for (const command of frame.commands) if (command.kind === "strike") audio.strike(command.bar, command.velocity);
+    }
+    assert.equal(sources.length, 23);
     audio.dispose(); assert.equal(sources[0].stopped,true); assert.equal(closed,true);
   } finally {globalThis.AudioContext=prior;}
+});
+
+test("audio unlock reports a context that remains suspended", async () => {
+  const prior = globalThis.AudioContext;
+  const parameter = () => ({ value: 0 });
+  globalThis.AudioContext = class {
+    state = "suspended";
+    resume() { return Promise.resolve(); }
+    createGain() { return { gain: parameter(), connect() {} }; }
+    createDynamicsCompressor() { return { threshold: parameter(), ratio: parameter(), connect() {} }; }
+  };
+  try { await assert.rejects(new RanatAudio().unlock(), /did not start/); }
+  finally { globalThis.AudioContext = prior; }
 });

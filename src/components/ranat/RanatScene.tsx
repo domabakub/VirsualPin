@@ -5,7 +5,7 @@ import { Canvas, useFrame, useLoader, useThree, type ThreeEvent } from "@react-t
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { Box3, Group, Mesh, MeshStandardMaterial, OrthographicCamera, PMREMGenerator, Vector3 } from "three";
-import type { MalletPose } from "@/instruments/ranat/handMallets";
+import { HAND_TIMEOUT_MS, type MalletPose } from "@/instruments/ranat/handMallets";
 import type { ArPlacement, ScreenBar } from "@/instruments/ranat/ar";
 
 export type RanatHit = { bar: number; hand: "L" | "R"; stamp: number; id?: number };
@@ -114,7 +114,7 @@ function Instrument({ hits = EMPTY_HITS, poses = EMPTY_POSES, range = [0, 20], d
       node.position.set(p.x, p.y + (reducedMotion ? 0 : Math.sin(age * .06) * .002 * pulse || 0), p.z);
       node.scale.x = 1;
       const mat = node.material as MeshStandardMaterial;
-      const aim = poses.find(p => p.bar === i && now - p.stamp < 180);
+      const aim = poses.find(p => p.bar === i && now - p.stamp < HAND_TIMEOUT_MS);
       mat.color.set(i >= disabledFrom || i < range[0] || i > range[1] ? "#70685e" : "#ffffff");
       mat.emissive.set(hit && pulse > 0 ? (hit.hand === "L" ? "#ffc879" : "#9be1f0") : aim ? (aim.hand === "L" ? "#a97434" : "#487e99") : "#000000");
       mat.emissiveIntensity = pulse * .6 + (aim ? .18 : 0);
@@ -122,7 +122,7 @@ function Instrument({ hits = EMPTY_HITS, poses = EMPTY_POSES, range = [0, 20], d
     });
     mallets.forEach((node, index) => {
       const hand = index === 0 ? "L" : "R";
-      const pose = poses.find(p => p.hand === hand && now - p.stamp < 180);
+      const pose = poses.find(p => p.hand === hand && now - p.stamp < HAND_TIMEOUT_MS);
       const hit = [...hits].reverse().find(h => h.hand === hand);
       const age = hit ? now - hit.stamp : Infinity;
       node.visible = !cameraInput || !!pose || age < 300;

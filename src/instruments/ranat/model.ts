@@ -12,7 +12,8 @@ export const articulations: { id: Articulation; title: string; english: string; 
 ];
 export function validBar(bar: number) { return Number.isInteger(bar) && bar >= 0 && bar < bars.length; }
 export function resolvePair(base: number, offset: number): [number, number] | null {
-  return validBar(base) && Number.isInteger(offset) && offset >= 1 && offset <= 7 && validBar(base + offset) ? [base, base + offset] : null;
+  if (!validBar(base) || !Number.isInteger(offset) || offset < 1 || offset > 7) return null;
+  return [base, validBar(base + offset) ? base + offset : base - offset];
 }
 export function patternNote(base: number, offset: number, mode: "kro" | "roll", step: number) {
   const pair = mode === "roll" ? (validBar(base) ? [base, base] : null) : resolvePair(base, offset);

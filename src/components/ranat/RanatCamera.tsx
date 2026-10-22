@@ -10,8 +10,8 @@ import type { RanatHit } from "./RanatScene";
 
 const steps = ["เลื่อนมือไปขอบซ้ายที่เอื้อมสบาย", "เลื่อนมือไปขอบขวาที่เอื้อมสบาย", "ยกมือขึ้นในท่าเตรียมตี", "ลดมือลงในท่าตี"];
 const empty: MalletFrame = { poses: [], commands: [], ambiguous: false };
-export function RanatCamera({ mode, offset, rangeStart, hits, suspended, pauseToken, onBegin, onRelease, onStop, onUnlock, onTouch }: {
-  mode: Articulation; offset: number; rangeStart: number; hits: RanatHit[]; suspended: boolean; pauseToken: number;
+export function RanatCamera({ mode, offset, hits, suspended, pauseToken, onBegin, onRelease, onStop, onUnlock, onTouch }: {
+  mode: Articulation; offset: number; hits: RanatHit[]; suspended: boolean; pauseToken: number;
   onBegin: (bar: number, mode: Articulation, offset: number, owner: string, source: RanatSource, hand?: "L" | "R", velocity?: number) => Promise<void>;
   onRelease: (owner: string) => void; onStop: () => void; onUnlock: () => Promise<boolean>; onTouch: (bar: number, owner: string) => void;
 }) {
@@ -27,7 +27,7 @@ export function RanatCamera({ mode, offset, rangeStart, hits, suspended, pauseTo
   const startRequest = useRef(0);
   const callbacks = useRef({ onBegin, onRelease, mode, offset });
   const invalidateStart = useCallback(() => { startRequest.current++; }, []);
-  const config = useMemo(() => ({ calibration, start: rangeStart, count: 8, mode, offset, sensitivity }), [calibration, rangeStart, mode, offset, sensitivity]);
+  const config = useMemo(() => ({ calibration, start: 0, count: 21, mode, offset, sensitivity }), [calibration, mode, offset, sensitivity]);
   useEffect(() => { callbacks.current = { onBegin, onRelease, mode, offset }; }, [onBegin, onRelease, mode, offset]);
   const dispatch = useCallback((commands: MalletCommand[]) => {
     const cb = callbacks.current;
@@ -75,7 +75,7 @@ export function RanatCamera({ mode, offset, rangeStart, hits, suspended, pauseTo
     dispatch(controller.current.reset());
     const timer = setTimeout(pause, 0);
     return () => clearTimeout(timer);
-  }, [mode, offset, rangeStart, sensitivity, suspended, pauseToken, pause, dispatch]);
+  }, [mode, offset, sensitivity, suspended, pauseToken, pause, dispatch]);
   useEffect(() => {
     if (camera.phase === "ready" && tracker.phase !== "error") return;
     dispatch(controller.current.reset());
@@ -107,10 +107,10 @@ export function RanatCamera({ mode, offset, rangeStart, hits, suspended, pauseTo
     resetTracking(); setRunning(true); setMessage("");
   }
   const ready = camera.phase === "ready" && tracker.phase === "tracking";
-  const status = suspended ? "กำลังฟังบันทึก · พักการจับมือ" : frame.ambiguous ? "มือซ้อนกัน · แยกมือแล้วลองใหม่" : running ? frame.poses.length ? "เล็งลูกระนาด แล้วยก–ลดมือเพื่อตี" : "ยกมือให้กล้องเห็น แล้วเตรียมตี" : "ขยับซ้าย–ขวาเพื่อเล็ง · ลดมือเพื่อตี";
+  const status = suspended ? "กำลังฟังบันทึก · พักการจับมือ" : frame.ambiguous ? "มือซ้อนกัน · แยกมือแล้วลองใหม่" : running ? frame.poses.length ? "เล็งลูกระนาด แล้วยก–ลดมือเพื่อตี" : "ยกมือถึงเส้นเขียว แล้วลดผ่านเส้นทอง" : "ขยับซ้าย–ขวาเพื่อเล็ง · ลดมือเพื่อตี";
   return <div className="rn-air-workspace">
     <div className="rn-air-toolbar"><div className="rn-air-copy"><p className="eyebrow">HAND PLAY / เล่นด้วยมือ</p><h2>มือขยับ. ไม้ตาม.</h2><p role="status">{status}</p>
-      <div className="rn-air-actions">{camera.phase !== "ready" ? <button className="ui-button" disabled={camera.phase === "requesting"} onClick={() => void camera.start()}>{camera.phase === "requesting" ? "กำลังเปิดกล้อง…" : "เปิดกล้อง"}</button> : <>
+      <div className="rn-air-actions"><button className="ui-button" onClick={async () => { if (await onUnlock()) { await onBegin(10, "direct", 1, "sound-test", "touch", "R", .8); setMessage("ส่งโน้ตทดสอบแล้ว · หากไม่ได้ยิน ให้ตรวจระดับเสียงอุปกรณ์"); } else setMessage("เปิดเสียงไม่สำเร็จ กรุณาแตะทดสอบเสียงอีกครั้ง"); }}>ทดสอบเสียง</button>{camera.phase !== "ready" ? <button className="ui-button" disabled={camera.phase === "requesting"} onClick={() => { void onUnlock(); void camera.start(); }}>{camera.phase === "requesting" ? "กำลังเปิดกล้อง…" : "เปิดกล้อง"}</button> : <>
         <button className={`ui-button ${running ? "rn-air-running" : ""}`} disabled={!ready || suspended || step !== null} onClick={() => running ? pause() : void startPlaying()}>{running ? "พักการจับมือ" : "เปิดเสียงและเริ่มตี"}</button>
         <button onClick={calibrate} disabled={!ready}>ตั้งพื้นที่เล่น</button><button onClick={() => { pause(); cancelCapture(); setStep(null); camera.stop(); }}>ปิดกล้อง</button>
       </>}</div>
@@ -118,13 +118,13 @@ export function RanatCamera({ mode, offset, rangeStart, hits, suspended, pauseTo
       {mode !== "direct" && <small>โหมดช่วยใช้มือหลักหนึ่งมือ อีกมืออยู่ในภาพได้{mode === "kro" || mode === "roll" ? " ลดมือค้างเพื่อเล่น ยกมือเพื่อหยุด" : " ยก–ลดหนึ่งครั้งเพื่อตีคู่"}</small>}
     </div><div className="rn-air-preview" style={{ aspectRatio: aspect }}>
       <video ref={videoRef} muted playsInline onLoadedMetadata={e => { const v = e.currentTarget; if (v.videoWidth && v.videoHeight) setAspect(v.videoWidth / v.videoHeight); }} style={{ transform: camera.facing === "user" ? "scaleX(-1)" : undefined }}/><canvas ref={canvasRef}/>
-      {camera.phase === "ready" && <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="rn-air-guides" aria-hidden="true"><rect x={calibration.left*100} y={calibration.raised*100} width={(calibration.right-calibration.left)*100} height={(calibration.lowered-calibration.raised)*100} fill="none" stroke="#fff8" strokeWidth=".5"/><path d={`M${calibration.left*100} ${calibration.raised*100}H${calibration.right*100}`} stroke="#a9edc4" strokeWidth=".8"/><path d={`M${calibration.left*100} ${(calibration.raised+(calibration.lowered-calibration.raised)*.62)*100}H${calibration.right*100}`} stroke="#f5c17e" strokeWidth=".8" strokeDasharray="2 2"/></svg>}
+      {camera.phase === "ready" && <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="rn-air-guides" aria-hidden="true"><rect x={calibration.left*100} y={calibration.raised*100} width={(calibration.right-calibration.left)*100} height={(calibration.lowered-calibration.raised)*100} fill="none" stroke="#fff8" strokeWidth=".5"/><path d={`M${calibration.left*100} ${(calibration.raised+(calibration.lowered-calibration.raised)*.45)*100}H${calibration.right*100}`} stroke="#a9edc4" strokeWidth=".8"/><path d={`M${calibration.left*100} ${(calibration.raised+(calibration.lowered-calibration.raised)*.62)*100}H${calibration.right*100}`} stroke="#f5c17e" strokeWidth=".8" strokeDasharray="2 2"/></svg>}
       {camera.phase !== "ready" && <div className="rn-air-placeholder"><span aria-hidden="true">◎</span><small>ให้กล้องเห็นสองมือ</small></div>}<span className="rn-air-preview-label">{ready ? `${tracker.hands.length} มือ · ${tracker.fps} FPS` : "CAMERA PREVIEW"}</span>
     </div></div>
     {step !== null && <div className="rn-air-calibration"><strong>{step + 1}/4 · {steps[step]}</strong><button className="ui-button" disabled={countdown !== null || !ready} onClick={capture}>{countdown !== null ? `จับใน ${countdown}…` : "จับตำแหน่งใน 2 วินาที"}</button><button onClick={() => { cancelCapture(); setStep(null); }}>ยกเลิก</button></div>}
     {(camera.error || tracker.error || message) && <p className="rn-air-message" role="status">{camera.error || tracker.error || message}</p>}
-    <RanatPlayStage hits={hits} poses={displayMalletPoses(frame.poses, mode, offset)} range={[rangeStart, rangeStart+7]} disabledFrom={mode === "pair" || mode === "kro" ? 21-offset : 21} cameraInput={!suspended} onDown={onTouch} onUp={onRelease}/>
-    <div className="rn-air-bottom"><div className="rn-air-hands">{(["L", "R"] as const).map(hand => { const pose = frame.poses.find(p => p.hand === hand); return <span key={hand} data-hand={hand} data-tracked={!!pose}><i/>{hand === "L" ? "ซ้าย" : "ขวา"}<strong>{pose ? `${bars[pose.bar].label} · ${pose.armed ? "พร้อมตี" : "ยกมือ"}` : "รอมือ"}</strong></span>; })}</div><label className="rn-air-sensitivity">ความไว<input aria-label="ความไวการตีผ่านกล้อง" type="range" min="0" max="1" step=".1" value={sensitivity} onChange={e => setSensitivity(Number(e.target.value))}/></label></div>
+    <RanatPlayStage hits={hits} poses={displayMalletPoses(frame.poses, mode, offset)} range={[0, 20]} disabledFrom={21} cameraInput={!suspended} onDown={onTouch} onUp={onRelease}/>
+    <p className="rn-air-message" role="status">{running ? "เสียงเปิด · พร้อมรับท่าตี" : "เสียงจากมือพักอยู่ · กดเปิดเสียงและเริ่มตี"} · เล่นได้ครบ 21 ลูก · {hits.length ? `รับโน้ตล่าสุด: ${bars[hits[hits.length - 1].bar].label} (ลูก ${hits[hits.length - 1].bar + 1})` : "ยังไม่มีโน้ตที่รับเข้า"}</p><div className="rn-air-bottom"><div className="rn-air-hands">{(["L", "R"] as const).map(hand => { const pose = frame.poses.find(p => p.hand === hand); return <span key={hand} data-hand={hand} data-tracked={!!pose}><i/>{hand === "L" ? "ซ้าย" : "ขวา"}<strong>{pose ? `${bars[pose.bar].label} · ${pose.armed ? "พร้อมตี" : "ยกมือ"}` : "รอมือ"}</strong></span>; })}</div><label className="rn-air-sensitivity">ความไว<input aria-label="ความไวการตีผ่านกล้อง" type="range" min="0" max="1" step=".1" value={sensitivity} onChange={e => setSensitivity(Number(e.target.value))}/></label></div>
     <p className="rn-air-footnote">เส้นเขียว = ยกเตรียม · เส้นทอง = ระดับตี · ประมวลผลภาพบนอุปกรณ์และไม่บันทึกวิดีโอ</p>
   </div>;
 }

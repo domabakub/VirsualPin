@@ -32,6 +32,7 @@ export class RanatAudio {
       this.master.connect(limiter); limiter.connect(this.context.destination);
     }
     await this.context.resume();
+    if (!this.ready) throw new Error("Audio context did not start");
   }
   setVolume(volume: number) { this.volume = volume; if (this.master && this.context) this.master.gain.setTargetAtTime(volume, this.time, 0.02); }
   strike(bar: number, velocity = 0.75, at = this.time) {

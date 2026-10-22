@@ -65,6 +65,20 @@ export function drawHands(
     );
 
     if (mode === "instrument") {
+      // Keep the same visible hand skeleton as the ranat, with phin finger cues on top.
+      context.lineCap = "round";
+      context.lineWidth = 2.2;
+      context.strokeStyle = color;
+      context.globalAlpha = .82;
+      for (const [from, to] of CONNECTIONS) {
+        context.beginPath(); context.moveTo(points[from].x, points[from].y);
+        context.lineTo(points[to].x, points[to].y); context.stroke();
+      }
+      context.globalAlpha = 1;
+      for (const point of points) {
+        context.beginPath(); context.arc(point.x, point.y, 3.2, 0, Math.PI * 2);
+        context.fillStyle = color; context.fill();
+      }
       context.shadowBlur = 0;
       if (hand.side === "Left") {
         // Thumb is the pinch modifier; fingers 1, 2 and 3 map to strings.

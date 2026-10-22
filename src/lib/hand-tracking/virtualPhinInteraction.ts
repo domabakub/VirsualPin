@@ -166,7 +166,7 @@ type PluckInput = {
 };
 
 export function detectPluck({ previous, current, elapsedMs, now, lastPluckAt, stringY = RIGHT_PLUCK_ZONE.stringY }: PluckInput): StringIndex | null {
-  if (!previous || elapsedMs <= 0) return null;
+  if (!previous || elapsedMs <= 0 || elapsedMs > 500) return null;
   if (now - lastPluckAt < RIGHT_PLUCK_ZONE.cooldownMs) return null;
   if (
     previous.x < RIGHT_PLUCK_ZONE.minX

@@ -10,14 +10,14 @@ export type MalletCommand = { kind: "strike"; bar: number; hand: MalletHand; vel
 export type MalletFrame = { poses: MalletPose[]; commands: MalletCommand[]; ambiguous: boolean };
 export type MalletConfig = { calibration: Calibration; start: number; count: number; mode: Articulation; offset: number; sensitivity: number };
 type Track = { x: number; y: number; v: number; bar: number; time: number; armed: boolean; lastHit: number };
-export const HAND_TIMEOUT_MS = 180;
-export const DEFAULT_CALIBRATION: Calibration = { left: .12, right: .88, raised: .22, lowered: .78 };
+export const HAND_TIMEOUT_MS = 500;
+export const DEFAULT_CALIBRATION: Calibration = { left: .02, right: .98, raised: .22, lowered: .78 };
 const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v));
 
 /** Show tracked hands even while sound is paused or the palm is outside the strike region. */
 export function previewMalletPoses(samples: PalmSample[], now: number, config: MalletConfig): MalletPose[] {
   const c = config.calibration;
-  const last = Math.min(config.start + config.count - 1, (config.mode === "pair" || config.mode === "kro") ? 20 - config.offset : 20);
+  const last = Math.min(config.start + config.count - 1, 20);
   if (last < config.start) return [];
   return samples.filter((s, i) => s.confidence >= .55 && Number.isFinite(s.x) && Number.isFinite(s.y) && samples.findIndex(p => p.hand === s.hand) === i).map(s => {
     const u = clamp((s.x - c.left) / (c.right - c.left), 0, 1);
@@ -30,7 +30,7 @@ export function previewMalletPoses(samples: PalmSample[], now: number, config: M
 export function displayMalletPoses(poses: MalletPose[], mode: Articulation, offset: number): MalletPose[] {
   if (mode === "direct") return poses;
   if (!poses.length) return [];
-  const base = poses[0], second = mode === "roll" ? base.bar : base.bar + offset;
+  const base = poses[0], second = mode === "roll" ? base.bar : base.bar + offset <= 20 ? base.bar + offset : base.bar - offset;
   if (second >= 21) return [];
   return [{ ...base, hand: "L" }, { ...base, hand: "R", bar: second }];
 }
@@ -65,12 +65,16 @@ export class HandMalletController {
     const seen = new Set<MalletHand>();
     for (const sample of accepted) {
       const mapped = mapCameraPoint(sample, config.calibration, config.start, config.count);
-      if (!mapped || ((config.mode === "pair" || config.mode === "kro") && mapped.bar + config.offset >= 21)) continue;
+      if (!mapped) continue;
       seen.add(sample.hand);
       let previous = this.tracks.get(sample.hand);
       const dt = previous ? now - previous.time : Infinity;
       // Identity jumps and stale frames must reacquire in the raised position.
-      if (previous && (dt <= 0 || dt > HAND_TIMEOUT_MS || Math.hypot(sample.x - previous.x, sample.y - previous.y) > .4)) previous = undefined;
+      if (previous && dt === 0) {
+        poses.push({ hand: sample.hand, bar: previous.bar, u: (previous.x - config.calibration.left) / (config.calibration.right - config.calibration.left), v: previous.v, armed: previous.armed, stamp: now });
+        continue;
+      }
+      if (previous && (dt < 0 || dt > HAND_TIMEOUT_MS || Math.abs(sample.x - previous.x) > .4)) previous = undefined;
       const u = (sample.x - config.calibration.left) / (config.calibration.right - config.calibration.left);
       let bar = mapped.bar;
       if (previous) {
@@ -78,10 +82,10 @@ export class HandMalletController {
         if (u >= (priorIndex - .12) / config.count && u <= (priorIndex + 1.12) / config.count) bar = previous.bar;
       }
       const track: Track = { x: sample.x, y: sample.y, v: mapped.v, bar, time: now, armed: previous?.armed ?? false, lastHit: previous?.lastHit ?? -Infinity };
-      if (mapped.v <= .28) track.armed = true;
+      if (mapped.v <= .45) track.armed = true;
       const velocity = previous ? (mapped.v - previous.v) / (dt / 1000) : 0;
       const threshold = .62;
-      const minVelocity = .9 - clamp(config.sensitivity, 0, 1) * .65;
+      const minVelocity = .12 - clamp(config.sensitivity, 0, 1) * .1;
       const strike = !!previous && track.armed && previous.v < threshold && mapped.v >= threshold && velocity >= minVelocity && now - track.lastHit >= 95;
       if (config.mode === "direct" || config.mode === "pair") {
         if (strike) {

@@ -20,7 +20,6 @@ import {
   detectRightPinchFocus,
   detectString,
   getLeftPinchRatios,
-  smoothLandmark,
   type CameraPoint,
   type FretSensitivity,
 } from "@/lib/hand-tracking/virtualPhinInteraction";
@@ -201,7 +200,7 @@ export function VirtualPhinCamera({ frets, activeString, expected, onSelectFret,
   useEffect(() => {
     if (arLayout.editing) return;
     const left = findHandForSideZone(tracker.hands, "Left", videoRef.current, canvasRef.current, mirrored, getStringArea(stageRef.current, stringsRef.current));
-    const now = performance.now();
+    const now = tracker.frameTime;
     if (!left) {
       if (!leftLostAtRef.current) leftLostAtRef.current = now;
       leftZoneLostAtRef.current = 0;
@@ -268,7 +267,7 @@ export function VirtualPhinCamera({ frets, activeString, expected, onSelectFret,
 
     const palm = averageLandmarks(left.landmarks, PALM_ANCHOR);
     const viewPoint = projectToView(palm, videoRef.current, canvasRef.current, mirrored);
-    const smoothed = smoothLandmark(leftSmoothedRef.current, viewPoint, 0.24);
+    const smoothed = viewPoint;
     leftSmoothedRef.current = smoothed;
 
     const nextFret = detectFret(smoothed, fretPreviewRef.current, fretOriginRef.current, FRET_TRAVEL[fretSensitivity]);
@@ -300,12 +299,12 @@ export function VirtualPhinCamera({ frets, activeString, expected, onSelectFret,
       const pressedString = leftFingerStringRef.current;
       ([0, 1, 2] as StringIndex[]).forEach((string) => onSelectFret(string, string === pressedString ? nextFret : 0));
     }
-  }, [arLayout.editing, fretSensitivity, mirrored, onPluck, onSelectFret, resetLeftFretToOpenString, tracker.hands]);
+  }, [arLayout.editing, fretSensitivity, mirrored, onPluck, onSelectFret, resetLeftFretToOpenString, tracker.hands, tracker.frameTime]);
 
   useEffect(() => {
     if (arLayout.editing) return;
     const right = findHandForSideZone(tracker.hands, "Right", videoRef.current, canvasRef.current, mirrored, getStringArea(stageRef.current, stringsRef.current));
-    const now = performance.now();
+    const now = tracker.frameTime;
     if (!right) {
       if (!rightLostAtRef.current) rightLostAtRef.current = now;
       if (now - rightLostAtRef.current <= 220) return;
@@ -322,6 +321,9 @@ export function VirtualPhinCamera({ frets, activeString, expected, onSelectFret,
       return;
     }
     rightLostAtRef.current = 0;
+    if (rightFrameAtRef.current && now - rightFrameAtRef.current > 500) {
+      previousRightRef.current = null; rightFrameAtRef.current = 0;
+    }
 
     const focus = detectRightPinchFocus(right.landmarks, rightPinchingRef.current);
     if (!focus) {
@@ -360,8 +362,8 @@ export function VirtualPhinCamera({ frets, activeString, expected, onSelectFret,
         width: stringBounds.width / stageBounds.width,
         height: stringBounds.height / stageBounds.height,
       }) : projected;
-    const smoothed = smoothLandmark(rightSmoothedRef.current, viewPoint, 0.62);
-    const elapsedMs = rightFrameAtRef.current ? Math.min(now - rightFrameAtRef.current, 90) : 0;
+    const smoothed = viewPoint;
+    const elapsedMs = rightFrameAtRef.current ? now - rightFrameAtRef.current : 0;
     const nextString = detectString(smoothed, selectedStringRef.current, stringY);
 
     if (nextString !== selectedStringRef.current) {
@@ -396,7 +398,7 @@ export function VirtualPhinCamera({ frets, activeString, expected, onSelectFret,
     previousRightRef.current = smoothed;
     rightSmoothedRef.current = smoothed;
     rightFrameAtRef.current = now;
-  }, [arLayout.editing, arLayout.layout.strings, mirrored, onPluck, tracker.hands]);
+  }, [arLayout.editing, arLayout.layout.strings, mirrored, onPluck, tracker.hands, tracker.frameTime]);
 
   useEffect(() => {
     fretOriginRef.current = LEFT_FRET_ZONE.minX;
