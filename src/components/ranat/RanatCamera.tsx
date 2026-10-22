@@ -58,8 +58,8 @@ export function RanatCamera({ mode, offset, hits, suspended, pauseToken, onBegin
       return () => cancelAnimationFrame(animation);
     }
     const result = controller.current.update(points, tracker.frameTime, config);
-    dispatch(result.commands);
-    const animation = requestAnimationFrame(() => setFrame({ ...result, poses: result.poses.length ? result.poses : previewMalletPoses(points, tracker.frameTime, config) }));
+    // Sound is dispatched by head-to-bar contact in the 3D scene.
+    const animation = requestAnimationFrame(() => setFrame({ ...result, commands: [] }));
     return () => cancelAnimationFrame(animation);
   }, [tracker.hands, tracker.frameTime, tracker.phase, camera.facing, camera.phase, running, suspended, step, config, dispatch]);
   useEffect(() => {
@@ -123,7 +123,7 @@ export function RanatCamera({ mode, offset, hits, suspended, pauseToken, onBegin
     </div></div>
     {step !== null && <div className="rn-air-calibration"><strong>{step + 1}/4 · {steps[step]}</strong><button className="ui-button" disabled={countdown !== null || !ready} onClick={capture}>{countdown !== null ? `จับใน ${countdown}…` : "จับตำแหน่งใน 2 วินาที"}</button><button onClick={() => { cancelCapture(); setStep(null); }}>ยกเลิก</button></div>}
     {(camera.error || tracker.error || message) && <p className="rn-air-message" role="status">{camera.error || tracker.error || message}</p>}
-    <RanatPlayStage hits={hits} poses={displayMalletPoses(frame.poses, mode, offset)} range={[0, 20]} disabledFrom={21} cameraInput={!suspended} onDown={onTouch} onUp={onRelease}/>
+    <RanatPlayStage hits={hits} poses={displayMalletPoses(frame.poses, mode, offset)} contactEnabled={running && !suspended && step === null && !frame.ambiguous} contactMode={mode} contactOffset={offset} onMalletCommands={dispatch} range={[0, 20]} disabledFrom={21} cameraInput={!suspended} onDown={onTouch} onUp={onRelease}/>
     <p className="rn-air-message" role="status">{running ? "เสียงเปิด · พร้อมรับท่าตี" : "เสียงจากมือพักอยู่ · กดเปิดเสียงและเริ่มตี"} · เล่นได้ครบ 21 ลูก · {hits.length ? `รับโน้ตล่าสุด: ${bars[hits[hits.length - 1].bar].label} (ลูก ${hits[hits.length - 1].bar + 1})` : "ยังไม่มีโน้ตที่รับเข้า"}</p><div className="rn-air-bottom"><div className="rn-air-hands">{(["L", "R"] as const).map(hand => { const pose = frame.poses.find(p => p.hand === hand); return <span key={hand} data-hand={hand} data-tracked={!!pose}><i/>{hand === "L" ? "ซ้าย" : "ขวา"}<strong>{pose ? `${bars[pose.bar].label} · ${pose.armed ? "พร้อมตี" : "ยกมือ"}` : "รอมือ"}</strong></span>; })}</div><label className="rn-air-sensitivity">ความไว<input aria-label="ความไวการตีผ่านกล้อง" type="range" min="0" max="1" step=".1" value={sensitivity} onChange={e => setSensitivity(Number(e.target.value))}/></label></div>
     <p className="rn-air-footnote">เส้นเขียว = ยกเตรียม · เส้นทอง = ระดับตี · ประมวลผลภาพบนอุปกรณ์และไม่บันทึกวิดีโอ</p>
   </div>;

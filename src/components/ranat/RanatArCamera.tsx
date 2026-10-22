@@ -82,8 +82,8 @@ export function RanatArCamera({ mode, offset, hits, suspended, pauseToken, onBeg
       return () => cancelAnimationFrame(animation);
     }
     const result = controller.current.update(points, tracker.frameTime, config);
-    dispatch(result.commands);
-    const animation = requestAnimationFrame(() => setFrame({ ...result, poses: result.poses.length ? result.poses : previewMalletPoses(points, tracker.frameTime, config) }));
+    // Sound is dispatched by head-to-bar contact in the 3D scene.
+    const animation = requestAnimationFrame(() => setFrame({ ...result, commands: [] }));
     return () => cancelAnimationFrame(animation);
   }, [tracker.hands, tracker.frameTime, tracker.phase, mirrored, camera.phase, running, suspended, editing, calibration, config, dispatch]);
 
@@ -161,7 +161,7 @@ export function RanatArCamera({ mode, offset, hits, suspended, pauseToken, onBeg
       <div className="rn-ar-model" style={{ opacity: placement.opacity }}
         onPointerUp={e => onRelease(`pointer-${e.pointerId}`)} onPointerCancel={e => onRelease(`pointer-${e.pointerId}`)} onLostPointerCapture={e => onRelease(`pointer-${e.pointerId}`)}>
         <SceneBoundary fallback={<p className="rn-ar-fallback">อุปกรณ์นี้แสดงระนาด 3D ไม่ได้ · ใช้โหมดกล้องหรือสัมผัสแทน</p>}>
-          <Scene ar={arProps} hits={hits} poses={displayMalletPoses(frame.poses, mode, offset)} range={[0, 20]}
+          <Scene ar={arProps} hits={hits} poses={displayMalletPoses(frame.poses, mode, offset)} contactEnabled={running && !suspended && !editing && !!calibration && !frame.ambiguous} contactMode={mode} contactOffset={offset} onMalletCommands={dispatch} range={[0, 20]}
             disabledFrom={21} cameraInput={camera.phase === "ready" && !suspended} onDown={onTouch} onUp={onRelease}/>
         </SceneBoundary>
       </div>

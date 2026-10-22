@@ -7,12 +7,17 @@ import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment
 import { Box3, Group, Mesh, MeshStandardMaterial, OrthographicCamera, PMREMGenerator, Vector3 } from "three";
 import { HAND_TIMEOUT_MS, type MalletPose } from "@/instruments/ranat/handMallets";
 import type { ArPlacement, ScreenBar } from "@/instruments/ranat/ar";
+import { MalletContactController, type ContactHead } from "@/instruments/ranat/malletContact";
+import type { Articulation } from "@/instruments/ranat/model";
+import type { MalletCommand } from "@/instruments/ranat/handMallets";
 
 export type RanatHit = { bar: number; hand: "L" | "R"; stamp: number; id?: number };
 export type RanatSceneProps = {
   hits?: RanatHit[]; poses?: MalletPose[]; range?: [number, number]; disabledFrom?: number;
   cameraInput?: boolean; showcase?: boolean; reducedMotion?: boolean; active?: boolean;
   onDown?: (bar: number, owner: string) => void; onUp?: (owner: string) => void;
+  contactEnabled?: boolean; contactMode?: Articulation; contactOffset?: number;
+  onMalletCommands?: (commands: MalletCommand[]) => void;
   /** Camera-overlay (AR) framing: the active range is placed on the video and bar tops are reported in view coordinates. */
   ar?: { placement: ArPlacement; onBars?: (bars: ScreenBar[]) => void };
 };
@@ -52,13 +57,21 @@ function FitCamera({ showcase, ar }: { showcase: boolean; ar: boolean }) {
   return null;
 }
 
-function Instrument({ hits = EMPTY_HITS, poses = EMPTY_POSES, range = [0, 20], disabledFrom = 21, cameraInput = false, showcase = false, reducedMotion = false, active = true, onDown, ar }: RanatSceneProps) {
+function Instrument({ hits = EMPTY_HITS, poses = EMPTY_POSES, range = [0, 20], disabledFrom = 21, cameraInput = false, showcase = false, reducedMotion = false, active = true, onDown, ar, contactEnabled = false, contactMode = "direct", contactOffset = 7, onMalletCommands }: RanatSceneProps) {
   const gltf = useLoader(GLTFLoader, "/models/ranat-modern-v6.glb");
   const group = useRef<Group>(null);
   const invalidate = useThree(s => s.invalidate);
   const arKey = useRef(""), onBars = useRef(ar?.onBars);
+  const contact = useRef(new MalletContactController());
+  const contactCallback = useRef(onMalletCommands);
+  useEffect(() => { contactCallback.current = onMalletCommands; }, [onMalletCommands]);
+  useEffect(() => {
+    const controller = contact.current;
+    contactCallback.current?.(controller.reset());
+    return () => { contactCallback.current?.(controller.reset()); };
+  }, [contactEnabled, contactMode, contactOffset, active]);
   useEffect(() => { onBars.current = ar?.onBars; }, [ar?.onBars]);
-  const { scene, barNodes, restPositions, strikeHeights, barCenters, mallets } = useMemo(() => {
+  const { scene, barNodes, restPositions, strikeHeights, barCenters, mallets, heads, contactBars } = useMemo(() => {
     const scene = gltf.scene.clone(true);
     const barNodes = Array.from({ length: 21 }, (_, i) => {
       const mesh = scene.getObjectByName(`bar_${String(i).padStart(2, "0")}`) as Mesh;
@@ -72,7 +85,16 @@ function Instrument({ hits = EMPTY_HITS, poses = EMPTY_POSES, range = [0, 20], d
       if (!node) throw new Error(`Missing ranat mallet ${hand}`);
       return node;
     });
-    return { scene, barNodes, restPositions: barNodes.map(node => node.position.clone()),
+    const heads = mallets.map((node, index) => {
+      const head = node.getObjectByName(`O5 | Padded_Head_${index ? "R" : "L"}`);
+      if (!head) throw new Error("Missing padded mallet head");
+      return head;
+    });
+    const contactBars = barNodes.map((node, bar) => {
+      const box = new Box3().setFromObject(node);
+      return { bar, left: box.min.x, right: box.max.x, front: box.min.z, back: box.max.z, top: box.max.y };
+    });
+    return { scene, barNodes, heads, contactBars, restPositions: barNodes.map(node => node.position.clone()),
       strikeHeights: barNodes.map(node => new Box3().setFromObject(node).max.y),
       barCenters: barNodes.map(node => new Box3().setFromObject(node).getCenter(new Vector3())), mallets };
   }, [gltf]);
@@ -105,6 +127,7 @@ function Instrument({ hits = EMPTY_HITS, poses = EMPTY_POSES, range = [0, 20], d
     if (!active) return;
     const now = performance.now(), count = range[1] - range[0] + 1;
     let moving = false;
+    const contactHeads: ContactHead[] = [];
     const position = (bar: number) => restPositions[Math.max(0, Math.min(20, bar))];
     barNodes.forEach((node, i) => {
       node.visible = true;
@@ -126,12 +149,13 @@ function Instrument({ hits = EMPTY_HITS, poses = EMPTY_POSES, range = [0, 20], d
       const hit = [...hits].reverse().find(h => h.hand === hand);
       const age = hit ? now - hit.stamp : Infinity;
       node.visible = !cameraInput || !!pose || age < 300;
-      const bar = Math.max(0, Math.min(20, (age < 90 ? hit?.bar : undefined) ?? pose?.bar ?? hit?.bar ?? (range[0] + Math.floor(count * (index ? .7 : .3)))));
+      const bar = Math.max(0, Math.min(20, (cameraInput ? pose?.bar : age < 90 ? hit?.bar : undefined) ?? pose?.bar ?? hit?.bar ?? (range[0] + Math.floor(count * (index ? .7 : .3)))));
       const p = position(bar);
       const pulse = Math.max(0, 1 - age / 220);
       const lift = pose ? Math.max(0, Math.min(.19, (.62 - pose.v) * .3)) : .09;
       // The v5 head has an 18 mm radius; land its lower edge on the curved bar.
-      const targetY = strikeHeights[bar] + .018 + (reducedMotion ? .065 : lift * (1 - pulse));
+      // Camera motion, including reduced-motion mode, must reach the surface independently of sound.
+      const targetY = strikeHeights[bar] + .018 + (pose ? lift : reducedMotion ? .065 : lift * (1 - pulse));
       const alpha = reducedMotion ? 1 : 1 - Math.exp(-delta * 28);
       node.position.x += (p.x - node.position.x) * alpha;
       node.position.y += (targetY - node.position.y) * alpha;
@@ -140,8 +164,14 @@ function Instrument({ hits = EMPTY_HITS, poses = EMPTY_POSES, range = [0, 20], d
       node.rotation.x = reducedMotion ? .32 : .32 + lift * .4;
       node.rotation.y = index === 0 ? -.38 : .38;
       node.rotation.z = 0;
+      if (contactEnabled && pose && (contactMode === "direct" || hand === "L")) {
+        node.updateWorldMatrix(true, true);
+        const box = new Box3().setFromObject(heads[index]);
+        contactHeads.push({ hand, x: (box.min.x + box.max.x) / 2, z: (box.min.z + box.max.z) / 2, bottom: box.min.y });
+      }
       if (pose || age < 320 || Math.abs(node.position.x - p.x) > .0005 || Math.abs(node.position.y - targetY) > .0005) moving = true;
     });
+    if (contactEnabled) contactCallback.current?.(contact.current.update(contactHeads, contactBars.filter(b => b.bar >= range[0] && b.bar <= range[1] && b.bar < disabledFrom), now, contactMode));
     if (group.current && showcase) {
       group.current.rotation.y = reducedMotion ? -.12 : Math.sin(state.clock.elapsedTime * .35) * .13;
       moving = !reducedMotion;

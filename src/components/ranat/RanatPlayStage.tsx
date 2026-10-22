@@ -28,7 +28,7 @@ export function RanatPlayStage(props: RanatSceneProps) {
     document.addEventListener("visibilitychange", update);
     return () => { observer.disconnect(); query.removeEventListener("change", motion); document.removeEventListener("visibilitychange", update); };
   }, []);
-  const fallback = <div className="rn-flat-fallback"><RanatSurface {...props} mallets={props.poses} decorative={props.showcase}/></div>;
+  const fallback = <div className="rn-flat-fallback">{props.cameraInput && <p role="status">แสดง 3D ไม่ได้ จึงตรวจหัวไม้สัมผัสลูกระนาดไม่ได้ · ใช้ปุ่มโน้ตสัมผัสแทน</p>}<RanatSurface {...props} mallets={props.poses} decorative={props.showcase}/></div>;
   return <div ref={wrapper} className={`rn-model-stage ${props.showcase ? "rn-model-showcase" : ""}`}>
     <div className="rn-model-view" onPointerUp={e => props.onUp?.(`pointer-${e.pointerId}`)} onPointerCancel={e => props.onUp?.(`pointer-${e.pointerId}`)} onLostPointerCapture={e => props.onUp?.(`pointer-${e.pointerId}`)}>
       {flat || (props.showcase && !seen) ? fallback : <ModelBoundary fallback={fallback}><Scene {...props} active={active} reducedMotion={reduced}/></ModelBoundary>}
@@ -44,7 +44,7 @@ export function RanatPlayStage(props: RanatSceneProps) {
           <strong>{bar.label}</strong><small>{bar.id + 1}</small>
         </button>)}
       </div>
-      <div className="rn-model-meta"><span>แตะลูกระนาดหรือปุ่มโน้ต · ไม้ทองซ้าย / ไม้ฟ้าขวา</span><button type="button" onClick={() => setFlat(!flat)}>{flat ? "ดูแบบ 3D" : "ใช้ภาพ 2D"}</button></div>
+      <div className="rn-model-meta"><span>{props.cameraInput ? "ยกไม้แล้วลดลงให้หัวไม้สัมผัสลูกระนาด · ไม้ทองซ้าย / ไม้ฟ้าขวา" : "แตะลูกระนาดหรือปุ่มโน้ต · ไม้ทองซ้าย / ไม้ฟ้าขวา"}</span>{!props.cameraInput && <button type="button" onClick={() => setFlat(!flat)}>{flat ? "ดูแบบ 3D" : "ใช้ภาพ 2D"}</button>}</div>
     </>}
   </div>;
 }
