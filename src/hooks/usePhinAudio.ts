@@ -5,6 +5,7 @@ import type { StringIndex } from "@/data/songs";
 import { createSynthWavUrl } from "@/lib/audio/wavSynth";
 import { getPhinFrequency } from "@/lib/audio/phinTuning";
 import { useAutomaticAudio } from "@/hooks/useAutomaticAudio";
+import { preparePlaybackSession } from "@/lib/audio/playbackSession";
 
 // Open-string tuning for A minor: string 3 (top) E3, string 2 A3 and
 // string 1 (bottom) E4. String indices remain zero-based internally.
@@ -92,6 +93,7 @@ export function usePhinAudio(volume = 0.8) {
 
   const unlockWebAudio = useCallback(async () => {
     try {
+      preparePlaybackSession();
       const context = getContext();
 
       // Prime Web Audio while the pointer event still counts as a direct user
@@ -114,6 +116,7 @@ export function usePhinAudio(volume = 0.8) {
 
   const prepareAudio = useCallback(async () => {
     try {
+      preparePlaybackSession();
       if (shouldUseHtmlAudio()) {
         const media = getMediaPlayers();
         if (!mediaUnlockedRef.current) {

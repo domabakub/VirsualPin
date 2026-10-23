@@ -67,6 +67,10 @@ test("audio release cancels scheduled hits while retaining already sounding tail
   };
   try {
     const audio = new RanatAudio(); await audio.unlock();
+    assert.equal(sources.length, 1, "prime audio during the initial gesture");
+    sources.shift();
+    await audio.unlock();
+    assert.equal(sources.length, 0, "do not prime again for each note");
     audio.strike(0,.7,1); audio.strike(7,.7,1.04);
     audio.cancelPending(); assert.equal(sources[0].stopped,false); assert.equal(sources[1].stopped,true);
     // A camera stroke reaches the audio engine for every bar, including slow devices.
@@ -88,6 +92,9 @@ test("audio unlock reports a context that remains suspended", async () => {
   const parameter = () => ({ value: 0 });
   globalThis.AudioContext = class {
     state = "suspended";
+    sampleRate = 1000;
+    createBuffer() { return {}; }
+    createBufferSource() { return { connect() {}, start() {}, disconnect() {} }; }
     resume() { return Promise.resolve(); }
     createGain() { return { gain: parameter(), connect() {} }; }
     createDynamicsCompressor() { return { threshold: parameter(), ratio: parameter(), connect() {} }; }

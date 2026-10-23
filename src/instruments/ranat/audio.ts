@@ -1,4 +1,5 @@
 import { bars, validBar } from "@/instruments/ranat/model";
+import { preparePlaybackSession } from "@/lib/audio/playbackSession";
 
 export function createRanatBuffer(context: BaseAudioContext, bar: number) {
   const buffer = context.createBuffer(1, Math.ceil(context.sampleRate * 1.8), context.sampleRate);
@@ -20,9 +21,11 @@ export class RanatAudio {
   private voices = new Set<AudioBufferSourceNode>();
   private starts = new Map<AudioBufferSourceNode, number>();
   private volume = 0.65;
+  private primed = false;
   get time() { return this.context?.currentTime ?? 0; }
   get ready() { return this.context?.state === "running"; }
   async unlock() {
+    preparePlaybackSession();
     if (!this.context) {
       this.context = new AudioContext({ latencyHint: "interactive" });
       this.master = this.context.createGain();
@@ -31,7 +34,15 @@ export class RanatAudio {
       limiter.threshold.value = -8; limiter.ratio.value = 8;
       this.master.connect(limiter); limiter.connect(this.context.destination);
     }
-    await this.context.resume();
+    if (!this.primed) {
+      const primer = this.context.createBufferSource();
+      primer.buffer = this.context.createBuffer(1, 1, this.context.sampleRate);
+      primer.connect(this.context.destination);
+      primer.onended = () => primer.disconnect();
+      primer.start();
+      this.primed = true;
+    }
+    if (!this.ready) await this.context.resume();
     if (!this.ready) throw new Error("Audio context did not start");
   }
   setVolume(volume: number) { this.volume = volume; if (this.master && this.context) this.master.gain.setTargetAtTime(volume, this.time, 0.02); }
@@ -61,5 +72,5 @@ export class RanatAudio {
   }
   cancelPending() { for (const [node, time] of this.starts) if (time > this.time) { try { node.stop(); } catch { /* Already stopped. */ } this.starts.delete(node); } }
   stop() { for (const node of this.voices) { try { node.stop(); } catch { /* Already ended. */ } } this.voices.clear(); this.starts.clear(); }
-  dispose() { this.stop(); void this.context?.close(); this.context = null; this.master = null; this.buffers.clear(); }
+  dispose() { this.stop(); void this.context?.close(); this.context = null; this.master = null; this.buffers.clear(); this.primed = false; }
 }
