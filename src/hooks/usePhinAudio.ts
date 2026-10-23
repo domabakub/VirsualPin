@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { StringIndex } from "@/data/songs";
 import { createSynthWavUrl } from "@/lib/audio/wavSynth";
 import { getPhinFrequency } from "@/lib/audio/phinTuning";
+import { useAutomaticAudio } from "@/hooks/useAutomaticAudio";
 
 // Open-string tuning for A minor: string 3 (top) E3, string 2 A3 and
 // string 1 (bottom) E4. String indices remain zero-based internally.
@@ -138,7 +139,7 @@ export function usePhinAudio(volume = 0.8) {
 
       const ready = await unlockWebAudio();
       setStatus(ready ? "ready" : "locked");
-      setError(ready ? null : "แตะปุ่มเปิดเสียงอีกครั้ง");
+      setError(ready ? null : "ลองแตะเครื่องดนตรีอีกครั้ง");
       return ready;
     } catch (reason) {
       console.error("Unable to unlock Web Audio", reason);
@@ -147,6 +148,8 @@ export function usePhinAudio(volume = 0.8) {
       return false;
     }
   }, [getMediaPlayers, unlockWebAudio, volume]);
+
+  useAutomaticAudio(unlock);
 
   const pluck = useCallback(async (string: StringIndex, fret: number) => {
     if (!(await unlock())) return false;

@@ -85,7 +85,6 @@ export function RanatWorkspace() {
             onKeyUp={e => { if (["Enter", " "].includes(e.key)) { e.preventDefault(); release(`number-key-${key}`); } }} onBlur={() => release(`number-key-${key}`)}
             ><kbd>{key}</kbd><small>{`${bars[bar].label} · ${bar + 1}`}</small></button>;
         })}</div><small>ไม่ต้องพิมพ์เลขสองหลักต่อกัน · ปุ่มลัดเล่นครบ 21 ลูกเสมอ · แป้นตัวเลขด้านขวาใช้ได้เมื่อเปิด Num Lock</small></div>}
-        {!audio.ready && <button className="rn-unlock ui-button" onClick={() => void audio.unlock()}>เปิดเสียง แล้วลองแตะระนาด <span>↗</span></button>}
       </section>
       <section className="rn-control-deck" aria-label="ปรับวิธีเล่น">
         <div className="rn-techniques"><div className="rn-label-row"><p className="eyebrow">MAKE IT YOUR OWN</p><button className="rn-help-button" aria-expanded={help} onClick={() => setHelp(!help)}>วิธีเล่น <span>ⓘ</span></button></div><div className="rn-mode-grid">{articulations.map((item, i) => <button key={item.id} aria-pressed={mode === item.id} onClick={() => { reset(); setMode(item.id); }}><span className="rn-mode-number">0{i + 1}</span><strong>{item.title}</strong><small>{item.english}</small></button>)}</div><p className="rn-technique-hint">{modeInfo.description}</p></div>

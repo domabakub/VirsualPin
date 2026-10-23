@@ -31,12 +31,13 @@ export function RanatArCamera({ mode, offset, hits, suspended, pauseToken, onBeg
   const camera = useCamera(videoRef);
   const mirrored = camera.facing === "user";
   const tracker = useHandTracking(videoRef, canvasRef, camera.phase === "ready", mirrored);
+  const running = camera.phase === "ready" && tracker.phase === "tracking";
   const [saved, setSaved] = useState<ArPlacement>(DEFAULT_AR_PLACEMENT), [draft, setDraft] = useState<ArPlacement | null>(null);
   const placement = draft ?? saved, editing = draft !== null;
   const [screenBars, setScreenBars] = useState<ScreenBar[]>([]);
-  const [message, setMessage] = useState(""), [running, setRunning] = useState(false), [sensitivity, setSensitivity] = useState(.5);
+  const [message, setMessage] = useState(""), [sensitivity, setSensitivity] = useState(.5);
   const [frame, setFrame] = useState<MalletFrame>(empty);
-  const controller = useRef(new HandMalletController()), lastFrame = useRef(0), startRequest = useRef(0);
+  const controller = useRef(new HandMalletController()), lastFrame = useRef(0);
   const drag = useRef<{ id: number; x: number; y: number; from: ArPlacement } | null>(null);
   const callbacks = useRef({ onBegin, onRelease, mode, offset });
   useEffect(() => { callbacks.current = { onBegin, onRelease, mode, offset }; }, [onBegin, onRelease, mode, offset]);
@@ -62,8 +63,7 @@ export function RanatArCamera({ mode, offset, hits, suspended, pauseToken, onBeg
     }
   }, []);
   const resetTracking = useCallback(() => { dispatch(controller.current.reset()); lastFrame.current = 0; setFrame(empty); }, [dispatch]);
-  const invalidateStart = useCallback(() => { startRequest.current++; }, []);
-  const pause = useCallback(() => { invalidateStart(); setRunning(false); resetTracking(); onStop(); }, [invalidateStart, onStop, resetTracking]);
+  const pause = useCallback(() => { resetTracking(); onStop(); }, [onStop, resetTracking]);
 
   useEffect(() => {
     const video = videoRef.current, stage = stageRef.current;
@@ -94,9 +94,9 @@ export function RanatArCamera({ mode, offset, hits, suspended, pauseToken, onBeg
     }, 60);
     const hide = () => { if (document.hidden) pause(); };
     window.addEventListener("blur", pause); document.addEventListener("visibilitychange", hide);
-    return () => { invalidateStart(); clearInterval(timer); window.removeEventListener("blur", pause); document.removeEventListener("visibilitychange", hide); dispatch(currentController.reset()); };
-  }, [dispatch, pause, resetTracking, invalidateStart]);
-  // Any change to what a gesture means stops the session; the player starts again deliberately.
+    return () => { clearInterval(timer); window.removeEventListener("blur", pause); document.removeEventListener("visibilitychange", hide); dispatch(currentController.reset()); };
+  }, [dispatch, pause, resetTracking]);
+  // Reset held notes when gesture settings change; tracking resumes automatically.
   useEffect(() => {
     dispatch(controller.current.reset());
     const timer = setTimeout(pause, 0);
@@ -109,17 +109,10 @@ export function RanatArCamera({ mode, offset, hits, suspended, pauseToken, onBeg
     return () => clearTimeout(timer);
   }, [camera.phase, tracker.phase, calibration, pause, dispatch]);
 
-  async function startPlaying() {
-    const request = ++startRequest.current;
-    const unlocked = await onUnlock();
-    if (request !== startRequest.current) return;
-    if (!unlocked) { setMessage("เปิดเสียงไม่สำเร็จ กรุณาลองอีกครั้ง"); return; }
-    resetTracking(); setRunning(true); setMessage("");
-  }
   const update = (patch: Partial<ArPlacement>) => setDraft(current => clampPlacement({ ...(current ?? saved), ...patch }));
   function save() {
     if (!draft) return;
-    try { localStorage.setItem(AR_PLACEMENT_KEY, serializePlacement(draft)); setMessage("บันทึกตำแหน่งระนาดแล้ว · กดเริ่มจับมือเพื่อเล่น"); }
+    try { localStorage.setItem(AR_PLACEMENT_KEY, serializePlacement(draft)); setMessage("บันทึกตำแหน่งระนาดแล้ว · ยกมือแล้วตีได้เลย"); }
     catch { setMessage("บันทึกถาวรไม่ได้ · ใช้ตำแหน่งนี้จนกว่าจะปิดหน้า"); }
     setSaved(draft); setDraft(null);
   }
@@ -146,9 +139,8 @@ export function RanatArCamera({ mode, offset, hits, suspended, pauseToken, onBeg
   return <div className="rn-ar-workspace">
     <div className="rn-air-toolbar rn-ar-toolbar"><div className="rn-air-copy"><p className="eyebrow">AR OVERLAY / ระนาดบนภาพกล้อง</p><h2>ระนาดอยู่ตรงหน้า.</h2><p role="status">{status}</p>
       <div className="rn-air-actions"><button className="ui-button" onClick={async () => { if (await onUnlock()) { await onBegin(10, "direct", 1, "sound-test", "touch", "R", .8); setMessage("ส่งโน้ตทดสอบแล้ว · หากไม่ได้ยิน ให้ตรวจระดับเสียงอุปกรณ์"); } else setMessage("เปิดเสียงไม่สำเร็จ กรุณาแตะทดสอบเสียงอีกครั้ง"); }}>ทดสอบเสียง</button>{camera.phase !== "ready" ? <button className="ui-button" disabled={camera.phase === "requesting"} onClick={() => { void onUnlock(); void camera.start(); }}>{camera.phase === "requesting" ? "กำลังเปิดกล้อง…" : "เปิดกล้อง AR"}</button> : <>
-        <button className={`ui-button ${running ? "rn-air-running" : ""}`} disabled={!ready || suspended || editing || !calibration} onClick={() => running ? pause() : void startPlaying()}>{running ? "พักการจับมือ" : "เปิดเสียงและเริ่มตี"}</button>
         <button onClick={() => void camera.flip()}>สลับกล้อง</button>
-        <button onClick={() => { pause(); setRunning(false); setDraft(null); camera.stop(); }}>ปิดกล้อง</button>
+        <button onClick={() => { pause(); setDraft(null); camera.stop(); }}>ปิดกล้อง</button>
       </>}
         {!editing && <button onClick={() => { pause(); setDraft(placement); setMessage(""); }}>จัดตำแหน่งระนาด</button>}
       </div>
@@ -181,7 +173,7 @@ export function RanatArCamera({ mode, offset, hits, suspended, pauseToken, onBeg
       <div className="rn-ar-editor-actions"><button onClick={() => update(DEFAULT_AR_PLACEMENT)}>ค่าเริ่มต้น</button><button onClick={() => setDraft(null)}>ยกเลิก</button><button className="ui-button" onClick={save}>บันทึกตำแหน่ง</button></div>
     </div>}
     {(camera.error || tracker.error || regionMessage || message) && <p className="rn-air-message" role="status">{camera.error || tracker.error || regionMessage || message}</p>}
-    <p className="rn-air-message" role="status">{running ? "เสียงเปิด · พร้อมรับท่าตี" : "เสียงจากมือพักอยู่ · กดเปิดเสียงและเริ่มตี"} · เล่นได้ครบ 21 ลูก · {hits.length ? `รับโน้ตล่าสุด: ${bars[hits[hits.length - 1].bar].label} (ลูก ${hits[hits.length - 1].bar + 1})` : "ยังไม่มีโน้ตที่รับเข้า"}</p><div className="rn-air-bottom"><div className="rn-air-hands">{(["L", "R"] as const).map(hand => { const pose = frame.poses.find(p => p.hand === hand); return <span key={hand} data-hand={hand} data-tracked={!!pose}><i/>{hand === "L" ? "ซ้าย" : "ขวา"}<strong>{pose ? `${bars[pose.bar].label} · ${pose.armed ? "พร้อมตี" : "ยกมือ"}` : "รอมือ"}</strong></span>; })}</div><label className="rn-air-sensitivity">ความไว<input aria-label="ความไวการตีผ่านกล้อง" type="range" min="0" max="1" step=".1" value={sensitivity} onChange={e => setSensitivity(Number(e.target.value))}/></label></div>
+    <p className="rn-air-message" role="status">{running ? "พร้อมรับท่าตี" : "เปิดกล้องแล้วเล่นได้ทันที"} · เล่นได้ครบ 21 ลูก · {hits.length ? `รับโน้ตล่าสุด: ${bars[hits[hits.length - 1].bar].label} (ลูก ${hits[hits.length - 1].bar + 1})` : "ยังไม่มีโน้ตที่รับเข้า"}</p><div className="rn-air-bottom"><div className="rn-air-hands">{(["L", "R"] as const).map(hand => { const pose = frame.poses.find(p => p.hand === hand); return <span key={hand} data-hand={hand} data-tracked={!!pose}><i/>{hand === "L" ? "ซ้าย" : "ขวา"}<strong>{pose ? `${bars[pose.bar].label} · ${pose.armed ? "พร้อมตี" : "ยกมือ"}` : "รอมือ"}</strong></span>; })}</div><label className="rn-air-sensitivity">ความไว<input aria-label="ความไวการตีผ่านกล้อง" type="range" min="0" max="1" step=".1" value={sensitivity} onChange={e => setSensitivity(Number(e.target.value))}/></label></div>
     <p className="rn-air-footnote">เส้นเขียว = ยกเตรียม · เส้นทอง = ระดับลูกระนาด (ตี) · AR แบบซ้อนภาพ ยังไม่ยึดกับโต๊ะจริง · แตะลูกบนภาพเพื่อเล่นได้เช่นกัน</p>
   </div>;
 }

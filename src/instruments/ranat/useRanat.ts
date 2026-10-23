@@ -1,6 +1,7 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { RanatAudio } from "@/instruments/ranat/audio";
+import { useAutomaticAudio } from "@/hooks/useAutomaticAudio";
 import { type Articulation, type RanatEvent, type RanatSource, type RanatTake, parseRanatTake, patternNote, resolvePair, validBar } from "@/instruments/ranat/model";
 
 const STORAGE_KEY = "next-instruments.ranat.takes.v1";
@@ -30,8 +31,9 @@ export function useRanat() {
   const setVolume = (value: number) => { volumeRef.current = value; engine.current?.setVolume(value / 100); setVolumeState(value); };
   const unlock = useCallback(async () => {
     try { if (!engine.current) { engine.current = new RanatAudio(); engine.current.setVolume(volumeRef.current / 100); } await engine.current.unlock(); setReady(true); setError(""); return true; }
-    catch { setError("เปิดเสียงไม่ได้ ลองกดเปิดเสียงอีกครั้ง หรือใช้เบราว์เซอร์อื่น"); return false; }
+    catch { setError("เริ่มเสียงไม่ได้ ลองแตะเครื่องดนตรีอีกครั้ง"); return false; }
   }, []);
+  useAutomaticAudio(unlock);
   const emit = useCallback((bar: number, hand: "L" | "R", source: RanatSource, assisted: boolean, at: number, velocity = 0.72) => {
     const audio = engine.current;
     if (!audio || !validBar(bar)) return;
