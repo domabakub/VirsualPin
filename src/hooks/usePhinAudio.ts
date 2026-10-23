@@ -112,7 +112,7 @@ export function usePhinAudio(volume = 0.8) {
     }
   }, [getContext]);
 
-  const unlock = useCallback(async () => {
+  const prepareAudio = useCallback(async () => {
     try {
       if (shouldUseHtmlAudio()) {
         const media = getMediaPlayers();
@@ -148,6 +148,16 @@ export function usePhinAudio(volume = 0.8) {
       return false;
     }
   }, [getMediaPlayers, unlockWebAudio, volume]);
+
+  const unlocking = useRef<Promise<boolean> | null>(null);
+  const unlock = useCallback(() => {
+    // The gesture listener and the note handler can run in the same tap.
+    // Prime the iOS media pool once, so a late primer cannot stop that note.
+    if (!unlocking.current) {
+      unlocking.current = prepareAudio().finally(() => { unlocking.current = null; });
+    }
+    return unlocking.current;
+  }, [prepareAudio]);
 
   useAutomaticAudio(unlock);
 
